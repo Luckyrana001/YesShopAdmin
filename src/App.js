@@ -16,11 +16,10 @@ import Geography from "./scenes/geography";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
 import Calendar from "./scenes/calendar/calendar";
-import SignInSide from "./scenes/login";
 import { Outlet } from 'react-router-dom';
 import { isAuthPageAtom } from "./scenes/global/AppConfig";
 import { atom, useAtom } from 'jotai';
-import Login from "./scenes/login/Login";
+import SignInSide from "./scenes/login/SignInSide";
  function App() {
   const [theme, colorMode] = useMode();
   const [isSidebar, setIsSidebar] = useState(false);
@@ -30,7 +29,7 @@ import Login from "./scenes/login/Login";
 
   function Layout() {
     const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom)
-    if (isAuthPage) return  Navigate("/login");
+    if (isAuthPage) return  Navigate("/SignInSide");
     return (
       <main>
        <Sidebar isSidebar={isSidebar} />
@@ -48,7 +47,7 @@ import Login from "./scenes/login/Login";
           <main className="content">
             <Topbar setIsSidebar={setIsSidebar} />
             <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<LoginMUI />} />
             <Route path="/financeDashboard" element={<FinanceDashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/team" element={<Team />} />
