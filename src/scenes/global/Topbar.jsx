@@ -8,13 +8,20 @@ import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
-
+import { isAuthPageAtom } from "./AppConfig";
+import { useAtom } from 'jotai'
 const Topbar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
-
+  const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom)
   return (
+    <div>
+       {isAuthPage ? (
+          // <div>
+          //   <h1>hello</h1>
+          // </div>
+       
     <Box display="flex" justifyContent="space-between" p={2}>
       {/* SEARCH BAR */}
       <Box
@@ -48,6 +55,10 @@ const Topbar = () => {
         </IconButton>
       </Box>
     </Box>
+      ) : (
+        ''
+      )}
+      </div>
   );
 };
 

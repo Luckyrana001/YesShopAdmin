@@ -16,6 +16,8 @@ import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutl
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
+import { isAuthPageAtom } from "./AppConfig";
+import { useAtom } from 'jotai'
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -38,11 +40,20 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
 const Sidebar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [selected, setSelected] = useState("Dashboard");
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
 
+  const [selected, setSelected] = useState("Dashboard");
+  const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom)
   return (
+    <div>
+       {isAuthPage ? (
+          // <div>
+          //   <h1>hello</h1>
+          // </div>
+       
     <Box
+    visibility={isVisible}
       sx={{
         "& .pro-sidebar-inner": {
           background: `${colors.white[50]} !important`,
@@ -69,14 +80,14 @@ const Sidebar = () => {
             icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
             style={{
               margin: "10px 0 20px 0",
-              color: colors.grey[100],
+              color: colors.grey[100],    
             }}
           >
             {!isCollapsed && (
               <Box
                 display="flex"
                 justifyContent="space-between"
-                alignItems="center"
+                alignItems="center"F
                 ml="15px"
               >
                 <Typography variant="h3" color={colors.grey[100]}>
@@ -119,7 +130,7 @@ const Sidebar = () => {
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
               title="Dashboard"
-              to="/"
+              to="/financeDashboard"
               icon={<HomeOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -290,6 +301,10 @@ const Sidebar = () => {
         </Menu>
       </ProSidebar>
     </Box>
+     ) : (
+      ''
+    )}
+    </div>
   );
 };
 

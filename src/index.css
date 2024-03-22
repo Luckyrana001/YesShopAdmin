@@ -9,7 +9,9 @@ body,
   width: 100%;
   font-family: "Source Sans Pro", sans-serif;
 }
-
+.bg {
+  background-color: aqua;
+}
 .app {
   display: flex;
   position: relative;
