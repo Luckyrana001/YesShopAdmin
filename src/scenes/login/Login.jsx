@@ -15,7 +15,7 @@ const Login = () => {
           letterSpacing: "normal",
           textAlign: "right",
           fontSize: "16px",
-          color: "#fff",
+          color: "#ffffff",
           fontFamily: "Montserrat",
         }}
       >
