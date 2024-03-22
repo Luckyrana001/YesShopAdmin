@@ -47,7 +47,7 @@ import SignInSide from "./scenes/login/SignInSide";
           <main className="content">
             <Topbar setIsSidebar={setIsSidebar} />
             <Routes>
-            <Route path="/" element={<LoginMUI />} />
+            <Route path="/" element={<SignInSide />} />
             <Route path="/financeDashboard" element={<FinanceDashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/team" element={<Team />} />
