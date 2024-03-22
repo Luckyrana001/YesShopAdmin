@@ -29,7 +29,9 @@ import SignInSide from "./scenes/login/SignInSide";
 
   function Layout() {
     const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom)
-    if (isAuthPage) return  Navigate("/SignInSide");
+    if (isAuthPage) 
+    return  Navigate("/SignInSide");
+   else
     return (
       <main>
        <Sidebar isSidebar={isSidebar} />
@@ -38,6 +40,9 @@ import SignInSide from "./scenes/login/SignInSide";
       </main>
     )
   }
+
+
+  
   return (
     <ColorModeContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
@@ -48,6 +53,7 @@ import SignInSide from "./scenes/login/SignInSide";
             <Topbar setIsSidebar={setIsSidebar} />
             <Routes>
             <Route path="/" element={<SignInSide />} />
+            <Route path="/login" element={<SignInSide />} />
             <Route path="/financeDashboard" element={<FinanceDashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/team" element={<Team />} />

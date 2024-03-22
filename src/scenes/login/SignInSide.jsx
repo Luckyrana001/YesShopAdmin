@@ -10,12 +10,11 @@ import TextField from '@mui/material/TextField';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
+import { useNavigate } from 'react-router-dom';
 
-
-const defaultTheme = createTheme();
-
+import { isAuthPageAtom } from '../global/AppConfig';
+import { atom, useAtom } from 'jotai';
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -25,7 +24,22 @@ const Item = styled(Paper)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 
+
+
 export default function SignInSide() {
+
+ 
+
+    const defaultTheme = createTheme();
+    const navigate = useNavigate();
+    const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom)
+
+    //  login button click listener
+   function goToDashboard() {
+     setAuthStatus(false)
+     navigate("/financeDashboard");
+   }
+
 
   return (
 
@@ -122,6 +136,12 @@ export default function SignInSide() {
                     fullWidth
                     variant="contained"
                     sx={{ mt: 3, mb: 2 }}
+
+                    onClick={() => {
+                      //alert('clicked');
+                      goToDashboard()
+                    }}
+                  //  onClick={goToDashboard()}
                   >
                     Sign In
                   </Button>

@@ -1,4 +1,7 @@
+
+import * as React from 'react';
 import { useState } from "react";
+
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Link } from "react-router-dom";
@@ -18,10 +21,13 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import { isAuthPageAtom } from "./AppConfig";
 import { useAtom } from 'jotai'
+import { BackButtonListener } from "../../components/BackButtonListener";
+
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  
   return (
     <MenuItem
       active={selected === title}
@@ -45,13 +51,14 @@ const Sidebar = () => {
 
   const [selected, setSelected] = useState("Dashboard");
   const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom)
+
+
   return (
+    
     <div>
-       {isAuthPage ? (
-          // <div>
-          //   <h1>hello</h1>
-          // </div>
-       
+      
+       {!isAuthPage ? (
+      
     <Box
     visibility={isVisible}
       sx={{
@@ -72,6 +79,8 @@ const Sidebar = () => {
         },
       }}
     >
+  <BackButtonListener></BackButtonListener>
+      
       <ProSidebar collapsed={isCollapsed}>
         <Menu iconShape="square">
           {/* LOGO AND MENU ICON */}

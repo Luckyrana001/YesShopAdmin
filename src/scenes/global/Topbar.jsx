@@ -10,19 +10,23 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import { isAuthPageAtom } from "./AppConfig";
 import { useAtom } from 'jotai'
+import { useNavigate } from "react-router-dom";
+import { LogoDevOutlined, LogoutOutlined } from "@mui/icons-material";
 const Topbar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
   const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom)
+  const navigate = useNavigate();
+
+  function goToDashboard() {
+    setAuthStatus(true)
+    navigate("/");
+  }
   return (
     <div>
-       {isAuthPage ? (
-          // <div>
-          //   <h1>hello</h1>
-          // </div>
-       
-    <Box display="flex" justifyContent="space-between" p={2}>
+       {!isAuthPage ? (
+      <Box display="flex" justifyContent="space-between" p={2}>
       {/* SEARCH BAR */}
       <Box
         display="flex"
@@ -44,15 +48,19 @@ const Topbar = () => {
             <LightModeOutlinedIcon />
           )}
         </IconButton>
+      
         <IconButton>
           <NotificationsOutlinedIcon />
         </IconButton>
-        <IconButton>
-          <SettingsOutlinedIcon />
+
+        
+      
+        <IconButton onClick={() => 
+           goToDashboard()}>
+          <LogoutOutlined  />
         </IconButton>
-        <IconButton>
-          <PersonOutlinedIcon />
-        </IconButton>
+
+     
       </Box>
     </Box>
       ) : (

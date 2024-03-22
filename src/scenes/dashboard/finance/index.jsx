@@ -12,18 +12,18 @@ import GeographyChart from "../../../components/GeographyChart";
 import BarChart from "../../../components/BarChart";
 import StatBox from "../../../components/StatBox";
 import ProgressCircle from "../../../components/ProgressCircle";
-
+import React from "react";
 
 const FinanceDashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
+ 
   return (
     <Box m="20px">
       {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
-
         <Box>
           <Button
             sx={{
