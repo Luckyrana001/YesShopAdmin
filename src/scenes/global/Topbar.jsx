@@ -8,7 +8,7 @@ import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
-import { isAuthPageAtom } from "./AppConfig";
+import { isAuthPageAtom } from "../../config/AppConfig";
 import { useAtom } from 'jotai'
 import { useNavigate } from "react-router-dom";
 import { LogoDevOutlined, LogoutOutlined } from "@mui/icons-material";

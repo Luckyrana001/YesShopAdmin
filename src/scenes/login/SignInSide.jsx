@@ -13,8 +13,9 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useNavigate } from 'react-router-dom';
 
-import { isAuthPageAtom } from '../global/AppConfig';
+import { isAuthPageAtom } from '../../config/AppConfig';
 import { atom, useAtom } from 'jotai';
+import * as CONSTANT from "../../constants/Constant";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -37,7 +38,7 @@ export default function SignInSide() {
     //  login button click listener
    function goToDashboard() {
      setAuthStatus(false)
-     navigate("/financeDashboard");
+     navigate(CONSTANT.FINANCE_DASHBOARD)
    }
 
 

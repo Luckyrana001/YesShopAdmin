@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { isAuthPageAtom } from '../scenes/global/AppConfig';
+import { isAuthPageAtom } from "../config/AppConfig";
 import { atom, useAtom } from 'jotai';
 import { Box } from '@mui/material';
 import { useHistory } from "react-router-dom";

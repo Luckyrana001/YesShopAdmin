@@ -1,7 +1,10 @@
 import { createContext, useState, useMemo } from "react";
 import { createTheme } from "@mui/material/styles";
 // import MonSemiBold from '/assets/fonts/Montserrat-SemiBold.ttf';
-
+import '@fontsource/montserrat/300.css';
+import '@fontsource/montserrat/400.css';
+import '@fontsource/montserrat/500.css';
+import '@fontsource/montserrat/700.css';
 // color design tokens export
 export const tokens = (mode) => ({
   ...(mode === "dark"
