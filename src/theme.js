@@ -195,32 +195,32 @@ export const themeSettings = (mode) => {
     },
     typography: {
 
-      fontFamily: ["montserrat", "sans-serif"].join(","),
+      fontFamily: ["Montserrat"].join(","),
       fontSize: 12,
 
       h1: {
-        fontFamily: ["montserrat", "sans-serif"].join(","),
+        fontFamily: ["Montserrat", "montserrat"].join(","),
         fontSize: 40,
       },
       h2: {
-        fontFamily: ["montserrat", "sans-serif"].join(","),
+        fontFamily: ["Montserrat", "montserrat"].join(","),
         fontSize: 32,
       },
       h3: {
-        fontFamily: ["montserrat", "sans-serif"].join(","),
+        fontFamily: ["Montserrat", "montserrat"].join(","),
         fontSize: 24,
       },
       h4: {
-        fontFamily: ["montserrat", "sans-serif"].join(","),
-        fontSize: 20,
+        fontFamily: ["Montserrat", "montserrat"].join(","),
+        fontSize: 30,
       },
       h5: {
-        fontFamily: ["montserrat", "sans-serif"].join(","),
-        fontSize: 16,
+        fontFamily: ["Montserrat", "montserrat"].join(","),
+        fontSize: 20,
       },
       h6: {
-        fontFamily: ["montserrat", "sans-serif"].join(","),
-        fontSize: 14,
+        fontFamily: ["Montserrat", "montserrat"].join(","),
+        fontSize: 16,
       },
     },
   };

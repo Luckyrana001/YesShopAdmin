@@ -22,6 +22,7 @@ import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import { isAuthPageAtom } from "../../config/AppConfig";
 import { useAtom } from 'jotai'
 import { BackButtonListener } from "../../components/BackButtonListener";
+import { FINANCE_DASHBOARD } from '../../constants/Constant';
 
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
@@ -139,7 +140,7 @@ const Sidebar = () => {
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
               title="Dashboard"
-              to="/financeDashboard"
+              to={FINANCE_DASHBOARD}
               icon={<HomeOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -205,7 +206,7 @@ const Sidebar = () => {
             </Typography>
 
          
-<Item
+            <Item
               title="Manage Reports"
               to="/team"
               icon={<PeopleOutlinedIcon />}
