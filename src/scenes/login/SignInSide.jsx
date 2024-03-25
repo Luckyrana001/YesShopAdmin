@@ -48,7 +48,6 @@ export default function SignInSide() {
 
       {/* Main Container - Body */}
       <Grid container component="main" sx={{ height: '100vh'}}>
-        
         {/* BG */}
         <Grid
           item

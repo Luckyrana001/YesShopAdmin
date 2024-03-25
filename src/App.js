@@ -18,6 +18,7 @@ import { ColorModeContext, useMode } from "./theme";
 import Calendar from "./scenes/calendar/calendar";
 import SignInSide from "./scenes/login/SignInSide";
 import * as CONSTANT from "./constants/Constant";
+import FinanceHomePage from "./scenes/dashboard/finance/FinanceHomePage";
 
  function App() {
   const [theme, colorMode] = useMode();
@@ -35,7 +36,7 @@ import * as CONSTANT from "./constants/Constant";
             <Routes>
             <Route path="/" element={<SignInSide />} />
             <Route path={CONSTANT.LOGIN} element={<SignInSide />} />
-            <Route path={CONSTANT.FINANCE_DASHBOARD} element={<FinanceDashboard />} />
+            <Route path={CONSTANT.FINANCE_DASHBOARD} element={<FinanceHomePage />} />
             <Route path={CONSTANT.DELAER_DASHBOARD} element={<Dashboard />} />
 
               <Route path="/team" element={<Team />} />
