@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useState } from "react";
 
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, IconButton, Typography, useTheme, Icon } from "@mui/material";
 import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
@@ -23,11 +23,22 @@ import { isAuthPageAtom } from "../../config/AppConfig";
 import { useAtom } from 'jotai'
 import { BackButtonListener } from "../../components/BackButtonListener";
 import { FINANCE_DASHBOARD } from '../../constants/Constant';
+// import Icon from '@mui/core/Icon';
+// import { makeStyles } from '@material-ui/styles';
 
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+  // const useStyles = makeStyles({
+  //   imageIcon: {
+  //     height: '100%'
+  //   },
+  //   iconRoot: {
+  //     textAlign: 'center'
+  //   }
+  // });
   
   return (
     <MenuItem
@@ -47,7 +58,7 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
 const Sidebar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
   const [selected, setSelected] = useState("Dashboard");
@@ -100,9 +111,9 @@ const Sidebar = () => {
                 alignItems="center"F
                 ml="15px"
               >
-                <Typography variant="h3" color={colors.grey[100]}>
+                {/* <Typography variant="h3" color={colors.grey[100]}>
                   ADMINIS
-                </Typography>
+                </Typography> */}
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon />
                 </IconButton>
@@ -113,26 +124,7 @@ const Sidebar = () => {
           {!isCollapsed && (
             <Box mb="25px">
               <Box display="flex" justifyContent="center" alignItems="center">
-                <img
-                  alt="profile-user"
-                  width="100px"
-                  height="100px"
-                  src={`../../assets/user.png`}
-                  style={{ cursor: "pointer", borderRadius: "50%" }}
-                />
-              </Box>
-              <Box textAlign="center">
-                <Typography
-                  variant="h2"
-                  color={colors.grey[100]}
-                  fontWeight="bold"
-                  sx={{ m: "10px 0 0 0" }}
-                >
-                  Lucky Rana
-                </Typography>
-                <Typography variant="h5" color={colors.greenAccent[500]}>
-                  Sales Manager
-                </Typography>
+                  <img src="../../assets/common/Logo.svg"/>
               </Box>
             </Box>
           )}

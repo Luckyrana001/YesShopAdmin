@@ -8,6 +8,10 @@ body,
   height: 100%;
   width: 100%;
   font-family: "Source Sans Pro", sans-serif;
+  background-image: url("../public/assets/common/Logged-in-BG.jpg");
+  background-repeat: repeat-y;
+  background-size: cover;
+  background-position: center center;
 }
 .bg {
   background-color: aqua;

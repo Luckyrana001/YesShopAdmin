@@ -1,6 +1,5 @@
 import { createContext, useState, useMemo } from "react";
 import { createTheme } from "@mui/material/styles";
-// import MonSemiBold from '/assets/fonts/Montserrat-SemiBold.ttf';
 import '@fontsource/montserrat/300.css';
 import '@fontsource/montserrat/400.css';
 import '@fontsource/montserrat/500.css';
@@ -50,8 +49,8 @@ export const tokens = (mode) => ({
           500: "#db4f4a",
           600: "#af3f3b",
           700: "#832f2c",
-          800: "#58201e",
-          900: "#2c100f",
+          800: "#FF0084", /* Primary Pink */
+          900: "#4B0128", /* New Dark Pink */
         },
         blueAccent: {
           100: "#e1e2fe",
@@ -82,15 +81,25 @@ export const tokens = (mode) => ({
 
     : {
         grey: {
-          100: "#141414",
-          200: "#292929",
-          300: "#3d3d3d",
-          400: "#525252",
-          500: "#666666",
-          600: "#858585",
-          700: "#a3a3a3",
-          800: "#c2c2c2",
-          900: "#e0e0e0",
+          // 100: "#141414",
+          // 200: "#292929",
+          // 300: "#3d3d3d",
+          // 400: "#525252",
+          // 500: "#666666",
+          // 600: "#858585",
+          // 700: "#a3a3a3",
+          // 800: "#c2c2c2",
+          // 900: "#e0e0e0",
+
+          900: "#FFFFFF", // White - Primary Base
+          800: "#F8F7FD", // Lighter Grey - Main BG 50%
+          700: "#F5F6FA", // Primary Body Grey - Main BG
+          600: "#E4EBF7", // Lighter Blue - Yonder 50%
+          500: "#94B0E0", // Light Blue - Yonder Blue
+          400: "#CBCBCB", // Grey - Button Disabled
+          300: "#888888", // Grey - Tertiary
+          200: "#2B2B2B", // Black - Secondary
+          100: "#000000", // Jet Black - Primary
         },
         primary: {
           100: "#040509",
@@ -115,8 +124,8 @@ export const tokens = (mode) => ({
           900: "#dbf5ee",
         },
         redAccent: {
-          100: "#2c100f",
-          200: "#58201e",
+          100: "#4B0128",
+          200: "#FF0084",
           300: "#832f2c",
           400: "#af3f3b",
           500: "#db4f4a",
@@ -189,7 +198,7 @@ export const themeSettings = (mode) => {
               light: colors.grey[100],
             },
             background: {
-              default: "#fcfcfc",
+              default: colors.grey[700],
             },
           }),
     },

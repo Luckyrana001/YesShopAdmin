@@ -39,8 +39,8 @@ export default function SignInSide() {
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      {/* Main Container - Body */}
+    // <ThemeProvider theme={theme}>
+      // {/* Main Container - Body */}
       <Grid container component="main" sx={{ height: "100vh" }}>
         {/* BG */}
         <Grid
@@ -156,7 +156,7 @@ export default function SignInSide() {
         </Grid>
         {/* BG */}
       </Grid>
-      {/* Main Container - BG */}
-    </ThemeProvider>
+      // {/* Main Container - BG */}
+    // </ThemeProvider>
   );
 }
