@@ -1,84 +1,142 @@
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
-// import { tokens } from "../../../theme";
 import { tokens } from "../../../theme";
 import GreetingHeader from "../../../components/GreetingHeader";
-import React from "react";
-import Grid from '@mui/material/Unstable_Grid2'; // Grid version 2
-import BoltIcon from '@mui/icons-material/Bolt';
+import SectionHeader from "../../../components/SectionHeader";
+import SimpleTable from "../../../components/SimpleTable";
+import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import HighlightBox from "../../../components/HighlightBox";
-
-// import Paper from '@mui/material/Paper';
-// import { styled } from '@mui/material/styles';
-// const Item = styled(Paper)(({ theme }) => ({
-//   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
-//   ...theme.typography.body2,
-//   padding: theme.spacing(1.5),
-//   textAlign: 'center',
-//   color: theme.palette.text.secondary,
-// }));
+import * as React from "react";
 
 const FinanceHomePage = () => {
-    const theme = useTheme();
-    const colors = tokens(theme.palette.mode);
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
 
-  
-   
-    return (
+  return (
+    /* Main Container */
+    <Grid
+      container
+      component="main"
+      direction={"column"}
+      sx={{
+        // height: "100vh",
+        m: "0 2.5%" /* Approx 30px */,
+        borderRadius: "18px",
+      }}
+    >
+      {/* Greetings Header */}
+      <Grid container>
+        <Grid item>
+          <GreetingHeader name={"Sung Pik Yeng (Kellie) 👋🏻"}></GreetingHeader>
+        </Grid>
+      </Grid>
+      {/* Greetings Header */}
 
-    // <Box sx={{ flexGrow: 1 }}>
-        <Grid
+      {/* Highlights Section */}
+      <Grid container direction={"row"} spacing={3}>
+        <HighlightBox
+          highlightName={"To Approve"}
+          highlightCount={"100"}
+          highlightBG={colors.primary[100]}
+          highlightColor={colors.greenAccent[100]}
+          highlightIcon={"../../assets/common/Attention.svg"}
+        ></HighlightBox>
+
+        <HighlightBox
+          highlightName={"Scheduled"}
+          highlightCount={"10"}
+          highlightBG={colors.primary[200]}
+          highlightColor={colors.greenAccent[100]}
+          highlightIcon={"../../assets/common/Scheduled.svg"}
+        ></HighlightBox>
+
+        <HighlightBox
+          highlightName={"Validations"}
+          highlightCount={"12"}
+          highlightBG={colors.primary[300]}
+          highlightColor={colors.greenAccent[100]}
+          highlightIcon={"../../assets/common/Validations.svg"}
+        ></HighlightBox>
+      </Grid>
+      {/* Highlights Section */}
+
+      {/* Payouts Section */}
+      <Grid
         container
-        component="main"
-        direction={"column"}
-        sx={{ 
-          height: "100vh",
-          m: "0 2.5%", /* Approx 30px */
-          borderRadius: "18px",
-        }}
+        mt={3}
+        border={"1px solid" + colors.grey[600]}
+        borderRadius={2}
+        xs={12}
+        sm={12}
+        md={12}
+        lg={12}
+        xl={12}
       >
-        <Grid container>
-          <Grid item><GreetingHeader name={"Sung Pik Yeng (Kellie) 👋🏻"}></GreetingHeader></Grid>
-        </Grid>
-        
-        <Grid 
-          container
-          direction={"row"}
-          spacing={3}
-          >
-            
-          <HighlightBox
-            highlightName={"Needs Approval"}
-            highlightCount={"100"}
-            highlightBG={colors.redAccent[200]}
-            highlightColor={colors.greenAccent[100]}
-          >
-          </HighlightBox>
+        <SectionHeader
+          sectionIcon={"../../assets/common/Payouts.svg"}
+          sectionHeading={"Payouts"}
+        ></SectionHeader>
 
-          <HighlightBox
-            highlightName={"Scheduled"}
-            highlightCount={"10"}
-            highlightBG={colors.blueAccent[100]}
-            highlightColor={colors.greenAccent[100]}
-          >
-          </HighlightBox>
-
-          <HighlightBox
-            highlightName={"Validations"}
-            highlightCount={"12"}
-            highlightBG={colors.redAccent[100]}
-            highlightColor={colors.greenAccent[100]}
-          >
-          </HighlightBox>
-
-
-        </Grid>
+        <SimpleTable
+          statusData={"Needs Approval"}
+          statusBG={colors.primary[100]}
+        ></SimpleTable>
 
       </Grid>
+      {/* Payouts Section */}
 
-      
-      
 
-      // </Box>
+      {/* Validations Section */}
+      <Grid
+        container
+        mt={3}
+        border={"1px solid" + colors.grey[600]}
+        borderRadius={2}
+        xs={12}
+        sm={12}
+        md={12}
+        lg={12}
+        xl={12}
+      >
+        <SectionHeader
+          sectionIcon={"../../assets/common/Validations-black.svg"}
+          sectionHeading={"Validation"}
+        ></SectionHeader>
+
+        <SimpleTable
+          statusData={"In Validation"}
+          statusBG={colors.primary[300]}
+        ></SimpleTable>
+
+      </Grid>
+      {/* Validations Section */}
+
+      {/* On Hold Section */}
+      <Grid
+        container
+        mt={3}
+        border={"1px solid" + colors.grey[600]}
+        borderRadius={2}
+        xs={12}
+        sm={12}
+        md={12}
+        lg={12}
+        xl={12}
+      >
+        <SectionHeader
+          sectionIcon={"../../assets/common/OnHold.svg"}
+          sectionHeading={"On Hold"}
+        ></SectionHeader>
+
+        <SimpleTable
+          statusData={"In Validation"}
+          statusBG={colors.primary[300]}
+        ></SimpleTable>
+
+      </Grid>
+      {/* On Hold Section */}
+
+    </Grid>
+    /* Main Container */
   );
 };
 

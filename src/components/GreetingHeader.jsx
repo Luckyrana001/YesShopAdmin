@@ -7,7 +7,7 @@ const GreetingHeader = ({ name }) => {
 
   return (
 
-    <Grid container mb="30px" direction={"column"}>
+    <Grid container mb={2} direction={"column"}>
         <Grid item>
             <Typography variant="h6" color={colors.grey[100]}>
                 Welcome Back

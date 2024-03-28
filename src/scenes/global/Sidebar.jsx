@@ -6,6 +6,7 @@ import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme, Icon } from "@mui/material";
 import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
+// import { styled } from '@mui/material/styles';
 import { tokens } from "../../theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
@@ -23,28 +24,23 @@ import { isAuthPageAtom } from "../../config/AppConfig";
 import { useAtom } from 'jotai'
 import { BackButtonListener } from "../../components/BackButtonListener";
 import { FINANCE_DASHBOARD } from '../../constants/Constant';
-// import Icon from '@mui/core/Icon';
-// import { makeStyles } from '@material-ui/styles';
+
 
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  // const useStyles = makeStyles({
-  //   imageIcon: {
-  //     height: '100%'
-  //   },
-  //   iconRoot: {
-  //     textAlign: 'center'
-  //   }
-  // });
+  
+  
   
   return (
     <MenuItem
       active={selected === title}
+      fontFamily={"Montserrat-Bold"}
       style={{
-        color: colors.grey[100],
+        color: colors.grey[200],
+        fontFamily: "Montserrat-Bold",
       }}
       onClick={() => setSelected(title)}
       icon={icon}
@@ -83,11 +79,15 @@ const Sidebar = () => {
         "& .pro-inner-item": {
           padding: "5px 35px 5px 20px !important",
         },
-        "& .pro-inner-item:hover": {
-          color: "#868dfb !important",
+        "& .pro-inner-item:hover, ": {
+          color: colors.redAccent[200] + "!important",
+          fontFamily: "Montserrat-Bold",
+          // fontWeight: "Bold !important",
         },
         "& .pro-menu-item.active": {
-          color: "#6870fa !important",
+          color: colors.redAccent[200] + "!important",
+          fontFamily: "Montserrat-Bold",
+          // fontWeight: "900 !important",
         },
       }}
     >
@@ -101,17 +101,17 @@ const Sidebar = () => {
             icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
             style={{
               margin: "10px 0 20px 0",
-              color: colors.grey[100],    
+              color: colors.grey[100],
             }}
           >
             {!isCollapsed && (
               <Box
                 display="flex"
                 justifyContent="space-between"
-                alignItems="center"F
+                alignItems="center"
                 ml="15px"
               >
-                {/* <Typography variant="h3" color={colors.grey[100]}>
+                {/* <Typography variant="h3" color={colors.grey[200]}>
                   ADMINIS
                 </Typography> */}
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
@@ -125,6 +125,7 @@ const Sidebar = () => {
             <Box mb="25px">
               <Box display="flex" justifyContent="center" alignItems="center">
                   <img src="../../assets/common/Logo.svg"/>
+                  {/* <img src="../../assets/common/Attention.svg"/> */}
               </Box>
             </Box>
           )}

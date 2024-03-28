@@ -4,12 +4,19 @@ import React from "react";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import BoltIcon from "@mui/icons-material/Bolt";
 
-const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightColor }) => {
+const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightColor, highlightIcon }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
   return (
-    <Grid item xl={4} lg={4} md={4} sm={4} xs={4}>
+    <Grid item 
+        height={"17.5vh"}
+        xs={6}
+        sm={4}
+        md={4} 
+        lg={4}
+        xl={4}
+        >
       <Box
         sx={{
           background: colors.grey[900],
@@ -19,12 +26,12 @@ const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightCol
         }}
       >
         <Grid container direction={"row"}>
-          <Grid item xs={10}>
+          <Grid item xs={8.5} sm={8} md={9} lg={9.75}>
             <Grid container direction={"column"}>
               <Grid
                 item
                 sx={{
-                  margin: "20px 0 0 20px",
+                  margin: "20px 0 0 30px",
                   padding: "0",
                   fontSize: "18px",
                   fontWeight: "600",
@@ -46,7 +53,7 @@ const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightCol
             </Grid>
           </Grid>
 
-          <Grid item xs={2}>
+          <Grid item xs={3.5} sm={4} md={3} lg={2.25}>
             <Box
               display={"flex"}
               alignItems="center"
@@ -59,9 +66,14 @@ const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightCol
               }}
               backgroundColor={highlightBG}
               color={highlightColor}
-              mx={"auto"}
+            //   mx={"auto"}
             >
-              <BoltIcon></BoltIcon>
+            <Box>
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <img src={highlightIcon} width={24} />
+              </Box>
+            </Box>
+              
             </Box>
           </Grid>
         </Grid>
