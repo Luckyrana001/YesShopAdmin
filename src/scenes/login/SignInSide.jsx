@@ -59,100 +59,122 @@ export default function SignInSide() {
             backgroundSize: "cover",
             backgroundPosition: "center center",
           }}
+          // spacing={10}
         >
-          {/* Login Container */}
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            md={5}
-            lg={5}
-            xl={5}
-            component={Paper}
-            elevation={6}
-            sx={{
-              borderRadius: 2,
-              border: "1px solid #E4EBF7",
-            }}
-          >
-            {/* Header */}
-            <Box
+
+          <Grid container direction={"row"} p={3} justifyContent="space-evenly"  alignItems={"center"}>
+            <Grid 
+              item
+              xs={12}
+              sm={5}
+              md={4}
+              lg={4}
+              xl={6}
+              pb={5}
+            >
+              <Box display="flex" alignItems="center">
+                <img src="../assets/common/Logo-White.svg" width={320} />
+              </Box>
+            </Grid>
+
+
+            {/* Login Container */}
+            <Grid
+              item
+              xs={12}
+              sm={5}
+              md={4}
+              lg={5}
+              xl={6}
+              component={Paper}
+              elevation={6}
               sx={{
-                py: 6,
-                px: 3,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
+                borderRadius: 2,
+                border: "1px solid #E4EBF7",
               }}
             >
-              <Typography
-                variant="h5"
-                color={colors.grey[100]}
-                fontWeight="bold"
-                sx={{ m: "0 0 5px 0" }}
+              {/* Header */}
+              <Box
+                sx={{
+                  py: 6,
+                  px: 3,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
               >
-                Login to Account
-              </Typography>
-
-              <Box component="form" noValidate sx={{ mt: 1 }}>
-                {/* Form Elements */}
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="email"
-                  label="Email Address"
-                  name="email"
-                  autoComplete="email"
-                  autoFocus
-                />
-
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  name="password"
-                  label="Password"
-                  type="password"
-                  id="password"
-                  autoComplete="current-password"
-                />
-
-                <FormControlLabel
-                  control={<Checkbox value="remember" color="primary" />}
-                  label="Remember me"
-                />
-
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  sx={{ mt: 3, mb: 2 }}
-                  onClick={() => {
-                    goToDashboard();
-                  }}
+                <Typography
+                  variant="h5"
+                  color={colors.grey[100]}
+                  fontWeight="bold"
+                  sx={{ m: "0 0 5px 0", fontSize: 24 }}
                 >
-                  Sign In
-                </Button>
-                {/* Form Elements */}
-                <Grid container>
-                  <Grid item xs>
-                    <Link href="#" variant="body2">
-                      Forgot password?
-                    </Link>
+                  Login to Account
+                </Typography>
+
+                <Box component="form" noValidate sx={{ mt: 1 }}>
+                  {/* Form Elements */}
+                  <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    id="email"
+                    label="Email Address"
+                    name="email"
+                    autoComplete="email"
+                    autoFocus
+                  />
+
+                  <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    name="password"
+                    label="Password"
+                    type="password"
+                    id="password"
+                    autoComplete="current-password"
+                  />
+
+                  <FormControlLabel
+                    control={<Checkbox value="remember" color="primary" />}
+                    label="Remember me"
+                  />
+
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    sx={{ mt: 3, mb: 2 }}
+                    onClick={() => {
+                      goToDashboard();
+                    }}
+                  >
+                    Sign In
+                  </Button>
+                  {/* Form Elements */}
+                  <Grid container>
+                    <Grid item xs>
+                      <Link href="#" variant="body2">
+                        Forgot password?
+                      </Link>
+                    </Grid>
+                    <Grid item>
+                      <Link href="#" variant="body2">
+                        {"Don't have an account? Sign Up"}
+                      </Link>
+                    </Grid>
                   </Grid>
-                  <Grid item>
-                    <Link href="#" variant="body2">
-                      {"Don't have an account? Sign Up"}
-                    </Link>
-                  </Grid>
-                </Grid>
-                {/* <Copyright sx={{ mt: 5 }} /> */}
+                  {/* <Copyright sx={{ mt: 5 }} /> */}
+                </Box>
               </Box>
-            </Box>
-            {/* Header */}
+              {/* Header */}
+            </Grid>
+            {/* Login Container */}
+
           </Grid>
-          {/* Login Container */}
+
+          
         </Grid>
         {/* BG */}
       </Grid>
