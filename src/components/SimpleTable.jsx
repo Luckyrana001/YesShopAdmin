@@ -83,10 +83,12 @@ const SimpleTable = ({
                         >
                             <Grid container direction={"row"} alignItems={"center"} spacing={1.5}>
                                 <Grid item>
-                                    <Box width={6} height={6} borderRadius={6} backgroundColor={statusBG}></Box>
+                                    <Box width={6} height={6} borderRadius={6} backgroundColor={statusBG}
+                                      sx={{ display: { xs:"none", sm:"flex"} }}
+                                    ></Box>
                                 </Grid>
                                 <Grid item>
-                                {statusData}
+                                  {statusData}
                                 </Grid>
                             </Grid>
                             

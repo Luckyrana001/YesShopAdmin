@@ -1,8 +1,10 @@
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import Stack from '@mui/material/Stack';
 import { tokens } from "../../theme";
 import GreetingHeader from "../../components/GreetingHeader";
 import SectionHeader from "../../components/SectionHeader";
 import SimpleTable from "../../components/SimpleTable";
+import CustomButton from "../../components/CustomButton";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import HighlightStats from "../../components/HighlightStats";
 import * as React from "react";
@@ -10,7 +12,6 @@ import * as React from "react";
 const PayoutsArchive = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  
 
   return (
     /* Main Container */
@@ -45,7 +46,7 @@ const PayoutsArchive = () => {
       {/* Highlight Stats */}
 
 
-      {/* Validations Section */}
+      {/* On Hold Section */}
       <Grid
         container
         mt={3}
@@ -68,7 +69,41 @@ const PayoutsArchive = () => {
         ></SimpleTable>
 
       </Grid>
-      {/* Validations Section */}
+      {/* On Hold Section */}
+
+
+      {/* Action Buttons */}
+      <Grid item mt={3} justifyContent={"flex-start"}>
+        <Stack direction="row" spacing={2}>
+            <CustomButton
+                btnBG={colors.grey[900]}
+                btnColor={colors.grey[100]}
+                btnStartIcon={<img src="../../assets/common/Cross.svg" width={22}  />}
+                btnTxt={"Cancel"}
+            >
+            </CustomButton>
+
+            <CustomButton
+                btnBG={colors.grey[900]}
+                btnColor={colors.grey[100]}
+                btnStartIcon={<img src="../../assets/common/Tick.svg" width={22} />}
+                btnTxt={"Release"}
+            >
+            </CustomButton>
+
+            <CustomButton
+                btnBG={colors.grey[900]}
+                btnColor={colors.grey[100]}
+                btnStartIcon={<img src="../../assets/common/Download.svg" width={22} />}
+                btnEndIcon={<img src="../../assets/common/Arrow-down.svg" height={8}  />}
+                btnTxt={"Download"}
+            >
+            </CustomButton>
+        
+        </Stack>
+      </Grid>
+      
+      {/* Action Buttons */}
 
 
     </Grid>
