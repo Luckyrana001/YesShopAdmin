@@ -26,7 +26,7 @@ const FinanceHomePage = () => {
       {/* Greetings Header */}
       <Grid container>
         <Grid item>
-          <GreetingHeader name={"Sung Pik Yeng (Kellie) 👋🏻"}></GreetingHeader>
+          <GreetingHeader greeting={"Welcome Back"} name={"Sung Pik Yeng (Kellie) 👋🏻"}></GreetingHeader>
         </Grid>
       </Grid>
       {/* Greetings Header */}

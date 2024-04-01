@@ -29,8 +29,8 @@ const SectionHeader = ({
             </Grid>
             <Grid
               item
-              fontFamily={"Montserrat-Bold"}
               fontSize={20}
+              fontWeight={700}
             >
               {sectionHeading}
               </Grid>

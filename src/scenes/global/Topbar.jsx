@@ -12,8 +12,8 @@ import { isAuthPageAtom } from "../../config/AppConfig";
 import { useAtom } from 'jotai'
 import { useNavigate } from "react-router-dom";
 import { LogoDevOutlined, LogoutOutlined } from "@mui/icons-material";
-
-
+import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
+import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 
 
 
@@ -32,6 +32,31 @@ const Topbar = () => {
     <div>
        {!isAuthPage ? (
       <Box display="flex" justifyContent="flex-end" p={2} pb={0}>
+
+      <Box display="flex" backgroundColor="#fff" borderRadius={"20px"} justifyContent={"flex-start"} 
+        sx={
+          {
+            position: "absolute",
+            left: "20px",
+            color: colors.grey[200]
+          }
+        }
+      >
+        {/* <IconButton onClick={colorMode.toggleColorMode}>
+          {theme.palette.mode === "dark" ? (
+            <DarkModeOutlinedIcon />
+          ) : (
+            <LightModeOutlinedIcon />
+          )}
+        </IconButton> */}
+      
+        <IconButton onClick={() => 
+           goToDashboard()}>
+          <MenuOutlinedIcon  />
+        </IconButton>
+     
+      </Box>
+
       {/* SEARCH BAR */}
       <Box
         display="flex"
@@ -44,6 +69,7 @@ const Topbar = () => {
           <SearchIcon />
         </IconButton>
       </Box>
+      
 
       {/* ICONS */}
       <Box display="flex" backgroundColor="#fff" borderRadius={"20px"}>

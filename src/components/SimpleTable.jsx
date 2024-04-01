@@ -8,6 +8,8 @@ import { tokens } from "../theme";
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
+import { FINANCE_DASHBOARD, VALIDATIONS } from '../../src/constants/Constant';
+import { Link } from "react-router-dom";
 
 function createData(cycle, status, cutoff, payout, details) {
     return { cycle, status, cutoff, payout, details};
@@ -42,9 +44,14 @@ function createData(cycle, status, cutoff, payout, details) {
 const SimpleTable = ({
     statusBG,
     statusData,
+    to,
   }) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
+
+    const [selectedRow, setSelectedRow] = React.useState({});
+    console.log({ selectedRow });
+
 
     return (
 
@@ -65,10 +72,10 @@ const SimpleTable = ({
                     {rows.map((row) => (
                       <TableRow
                         key={row.name}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, textDecoration: 'none !important' }}
+                        component={Link} to="/payouts"
                       >
-                        <TableCell component="th" scope="row" sx={{ paddingLeft: "28px", fontSize:14, fontWeight: 600 }}
-                        >
+                        <TableCell component="th" scope="row" sx={{ paddingLeft: "28px", fontSize:14, fontWeight: 600 }}>
                           {row.cycle}
                         </TableCell>
                         <TableCell 

@@ -4,7 +4,10 @@ import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
 import FinanceDashboard from "./scenes/dashboard/finance";
-import Team from "./scenes/team";
+import Validations from "./scenes/validations";
+import PayoutsArchive from "./scenes/payoutsArchive";
+import Payouts from "./scenes/payouts";
+import OnHold from "./scenes/onhold";
 import Invoices from "./scenes/invoices";
 import Contacts from "./scenes/contacts";
 import Bar from "./scenes/bar";
@@ -39,7 +42,10 @@ import FinanceHomePage from "./scenes/dashboard/finance/FinanceHomePage";
             <Route path={CONSTANT.FINANCE_DASHBOARD} element={<FinanceHomePage />} />
             <Route path={CONSTANT.DELAER_DASHBOARD} element={<Dashboard />} />
 
-              <Route path="/team" element={<Team />} />
+              <Route path="/validations" element={<Validations />} />
+              <Route path="/payoutsArchive" element={<PayoutsArchive />} />
+              <Route path="/payouts" element={<Payouts />} />
+              <Route path="/onhold" element={<OnHold />} />
               <Route path="/contacts" element={<Contacts />} />
               <Route path="/invoices" element={<Invoices />} />
               <Route path="/form" element={<Form />} />

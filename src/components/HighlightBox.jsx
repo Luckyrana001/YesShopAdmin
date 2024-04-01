@@ -1,8 +1,7 @@
-import { Box, Typography, useTheme } from "@mui/material";
 import { tokens } from "../theme";
 import React from "react";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
-import BoltIcon from "@mui/icons-material/Bolt";
+import { Box, useTheme } from "@mui/material";
 
 const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightColor, highlightIcon }) => {
   const theme = useTheme();
@@ -10,7 +9,7 @@ const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightCol
 
   return (
     <Grid item 
-        height={"17.5vh"}
+        // height={"17.5vh"}
         xs={6}
         sm={4}
         md={4} 
