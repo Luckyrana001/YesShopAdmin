@@ -30,6 +30,7 @@ const CustomButton = ({
             padding: "8px 24px",
             },
             "& .customBtn:hover": {
+                backgroundColor: btnBG,
                 boxShadow: "0px 12px 24px 0px rgba(0, 0, 0, 0.15)",
             }
         }}

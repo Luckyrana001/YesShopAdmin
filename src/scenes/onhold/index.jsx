@@ -74,7 +74,7 @@ const PayoutsArchive = () => {
 
       {/* Action Buttons */}
       <Grid item mt={3} justifyContent={"flex-start"}>
-        <Stack direction="row" spacing={2}>
+        <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
             <CustomButton
                 btnBG={colors.grey[900]}
                 btnColor={colors.grey[100]}
