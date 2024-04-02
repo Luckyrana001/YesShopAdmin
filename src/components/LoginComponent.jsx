@@ -1,7 +1,6 @@
 import { AccessAlarm, AccountCircle } from "@mui/icons-material";
 import { InputAdornment, TextField } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
-import { isAuthPageAtom } from '../scenes/global/AppConfig';
 import { atom, useAtom } from 'jotai';
 import * as React from 'react';
 import Box from '@mui/material/Box';
@@ -14,9 +13,10 @@ import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { isAuthPageAtom } from "../config/AppConfig";
 
 
-const LoginComponent = () => {
+function LoginComponent() {
   // Consume persisted state like any other atom
   const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom)
 
