@@ -12,6 +12,8 @@ const HighlightStats = ({
   highlight2Stat,
   highlight3,
   highlight3Stat,
+  highlight4,
+  highlight4Stat,
 
 }) => {
   const theme = useTheme();
@@ -159,6 +161,31 @@ const HighlightStats = ({
             }}
             >
             {highlight3Stat}
+            </Grid>
+        </Grid>
+
+
+        <Grid container direction={"column"} justifyContent={"space-evenly"}>
+            <Grid
+            item
+            sx={{
+                fontWeight: "500",
+                color: colors.grey[300],
+                fontSize: "15px",
+                textTransform: "uppercase",
+            }}
+            >
+            {highlight4}
+            </Grid>
+            <Grid
+            item
+            alignItems={"center"}
+            sx={{
+                fontSize: "26px",
+                fontWeight: "600",
+            }}
+            >
+            {highlight4Stat}
             </Grid>
         </Grid>
         

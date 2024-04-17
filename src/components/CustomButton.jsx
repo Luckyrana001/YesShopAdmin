@@ -9,7 +9,8 @@ const CustomButton = ({
     btnColor,
     btnTxt,
     btnStartIcon,
-    btnEndIcon
+    btnEndIcon,
+    onClick,
 }
 ) => {
 
@@ -40,6 +41,7 @@ const CustomButton = ({
             variant="contained"
             startIcon= {btnStartIcon}
             endIcon= {btnEndIcon}
+            onClick={ onClick}
             >
             {btnTxt}
             </Button>
