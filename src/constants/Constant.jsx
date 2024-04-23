@@ -16,6 +16,7 @@ export const WITHOLDING_TAX_ROUTE = '/withHoldingTax';
 export const FREEZE_ACCOUNT_ROUTE = '/freezeAccount';
 export const CREDIT_DEBIT_ROUTE = '/creditDebit';
 export const REPORTS_ROUTE = '/reports';
+export const REPORTS_FILTER_ROUTE = "/reportDetails";
 export const ADJUSTMENT_ROUTE = '/adjustment';
 export const EARMARK_ROUTE = '/earkmark';
 

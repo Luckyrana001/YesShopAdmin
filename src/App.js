@@ -16,6 +16,7 @@ import DataGridDemo from "./scenes/contacts/DataGridDemo";
 
 
 import FAQ from "./scenes/faq";
+import FilterReports from "./scenes/faq/details";
 import Form from "./scenes/form";
 // import Bar from "./scenes/bar";
 // 
@@ -79,6 +80,7 @@ const handleProgressClick = (event) => {
               <Route path={CONSTANT.FREEZE_ACCOUNT_ROUTE} element={<FreezeAccountScreen />} />
               <Route path={CONSTANT.CREDIT_DEBIT_ROUTE} element={<CreditDebitScreen />} />
               <Route path={CONSTANT.REPORTS_ROUTE} element={<FAQ />} />
+              <Route path={CONSTANT.REPORTS_FILTER_ROUTE} element={<FilterReports />} />
               <Route path={CONSTANT.EARMARK_ROUTE} element={<EarmarkScreen />} />
 
               

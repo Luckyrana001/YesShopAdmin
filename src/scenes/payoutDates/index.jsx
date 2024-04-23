@@ -8,6 +8,7 @@ import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 
+
 import ConnectionStatus from "../../utils/ConnectionStatus";
 import { SnackbarProvider, useSnackbar } from "notistack";
 import UseOnlineStatus from "../../utils/UseOnlineStatus";
@@ -69,6 +70,8 @@ import SimpleTable from "../../components/SimpleTable";
 import { onHoldSummaryColumnHeader, payoutDatesColumnHeader, payoutDatesIncentiveColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
 import CustomButton from "../../components/CustomButton";
+
+
 
 const PayoutDatesScreen = () => {
   const theme = useTheme();
@@ -357,7 +360,7 @@ async function getPayoutDetail() {
       {/* Action Buttons */}
 
       {payoutDates.length > 0 ? (
-          <Grid item mt={1}  mr={10}   justifyContent={"flex-start"} pb={0}>
+          <Grid item mt={0}  mr={10}   justifyContent={"flex-start"} pb={0}>
             <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
               {/* <CustomButton
                 btnBG={colors.grey[900]}
@@ -468,12 +471,13 @@ async function getPayoutDetail() {
                   columns={payoutDatesIncentiveColumnHeader}
                   components={{ Toolbar: GridToolbar }}
                   checkboxSelection
-                  selecion
+                  // selecion
                   pageSize={pageSize}
                   rowCount={filteredRows.length}
                   pagination
                   onPageChange={handlePageChange}
                 />
+                
               </Box>
             ) : (
               NoDataFound()

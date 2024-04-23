@@ -4,6 +4,8 @@ import * as React from "react";
 import { Box, Button, IconButton, Typography,useTheme } from "@mui/material";
 import GreetingHeader from "../../components/GreetingHeader";
 import SectionHeader from "../../components/SectionHeader";
+import HighlightsPrimary from "../../components/HighlightsPrimary";
+import HighlightsSecondary from "../../components/HighlightsSecondary";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
@@ -295,7 +297,6 @@ async function getPayoutDetail() {
   };
   return (
      /* Main Container */
-    <Box>
     <SnackbarProvider maxSnack={3}>
     <ConnectionStatus />
     <ShowErrorAlertDialog
@@ -329,9 +330,9 @@ async function getPayoutDetail() {
 
       {/* Validations Section */}
       <Grid
-        container
+
         mt={3}
-        border={"1px solid" + colors.grey[600]}
+        // border={"1px solid" + colors.grey[600]}
         borderRadius={2}
         xs={12}
         sm={12}
@@ -342,32 +343,27 @@ async function getPayoutDetail() {
       >
 
          {/* Highlight Stats */}
-         <HighlightStats
-            highlightTotal={"100,000"}
-            highlight1={"Intervel"}
-            highlight1Stat={"1 Jan - 31 Dec 24"}
-            highlight2={"Dealers"}
-            highlight2Stat={"7"}
-            highlight3={"Confirmed"}
-            highlight3Stat={"3"}
-            highlight4={"UnConfirmed"}
-            highlight4Stat={"4"}
-          ></HighlightStats>
+         <HighlightsPrimary
+        highlightTotal={"1,000,000"}
+        highlightPayOut={"RM 900,000"}
+        payoutDealers={"24"}
+        payoutTransactions={"9,800"}
+        onHold={"RM 100,000"}
+        onHoldDealers={"1"}
+        onHoldTransactions={"200"}
+      ></HighlightsPrimary>
           {/* Highlight Stats */}
 
 
            {/* Highlight Stats */}
-           <HighlightStats
-            highlightTotal={"100,000"}
-            highlight1={"Intervel"}
-            highlight1Stat={"1 Jan - 31 Dec 24"}
-            highlight2={"Dealers"}
-            highlight2Stat={"7"}
-            highlight3={"Confirmed"}
-            highlight3Stat={"3"}
-            highlight4={"UnConfirmed"}
-            highlight4Stat={"4"}
-          ></HighlightStats>
+           <HighlightsSecondary
+        highlightTotal={"660,200"}
+        highlightTotal2={"560,000"}
+        prepaidAmount={"RM 100,200"}
+        prepaidAmount2={"RM 54,200"}
+        postpaidAmount={"RM 560,000"}
+        postpaidAmount2={"RM 185,600"}
+      ></HighlightsSecondary>
           {/* Highlight Stats */}
         <SectionHeader
           sectionIcon={"../../assets/common/Payouts.svg"}
@@ -507,7 +503,6 @@ async function getPayoutDetail() {
           {/* Action Buttons */}
        
     </SnackbarProvider>
-    </Box>
      /* Main Container */
   );
 };
