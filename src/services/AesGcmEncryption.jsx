@@ -1,30 +1,30 @@
 import DebugLog from "../utils/DebugLog";
 
- export async function initializeEncryption(data,keyBase64,apiTag) {
-  DebugLog(apiTag+"----Plain Request data---   "+JSON.stringify(data));
+ export async function initializeEncryption(signInData,keyBase64,apiTag) {
+  DebugLog(apiTag+"----Plain Request data---   "+JSON.stringify(signInData));
 
   // this code use AES ECB mode
-  return await  encryptWithAesEcb(keyBase64, JSON.stringify(data))
-  .then((encryptedData) => {
-            DebugLog(apiTag+"----Encrypted Content Data---   "+encryptedData);
-            return encryptedData
-          })
-          .catch((error) => {
-            console.error(error);
-          });
+  // return await  encryptWithAesEcb(keyBase64, JSON.stringify(signInData))
+  // .then((encryptedData) => {
+  //           DebugLog(apiTag+"----Encrypted Content Data---   "+encryptedData);
+  //           return encryptedData
+  //         })
+  //         .catch((error) => {
+  //           console.error(error);
+  //         });
    
-   }
+  //  }
 
 // below code is for AES-GCM Encryption , 
-//  return await  encryptData(keyBase64, JSON.stringify(signInData), rawIv)
-//       .then((encryptedData) => {
-//         console.log("encrypted login data-------   "+encryptedData);
-//         return encryptedData
-//       })
-//       .catch((error) => {
-//         console.error(error);
-//       });
-//   }
+ return await  encryptData(keyBase64, JSON.stringify(signInData), process.env.REACT_APP_ENCRYPTION_IV)
+      .then((encryptedData) => {
+        console.log("encrypted  data-------   "+encryptedData);
+        return encryptedData
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
 
  async function encryptWithAesEcb(keyBase64, data ){
  

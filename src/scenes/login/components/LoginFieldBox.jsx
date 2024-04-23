@@ -133,13 +133,17 @@ function LoginFieldBox() {
 
           const imeiNumber = "23423423423";
           const isAutoLogin = "N";
+          //const loginId = 'bizops';
+          //const password = 'ytlc@xm1234';
+
+
           const loginId = email;
           const password = pswd;
 
           const signInData = {
-            imeiNumber: imeiNumber,
-            isAutoLogin: isAutoLogin,
-            loginId: loginId,
+            //imeiNumber: imeiNumber,
+            //isAutoLogin: isAutoLogin,
+            userName: loginId,
             password: password,
           };
 
@@ -150,12 +154,15 @@ function LoginFieldBox() {
           )
             .then((encryptedLoginData) => {
               DebugLog("Content data Login Data=====" + encryptedLoginData);
-              saveToLocalStorage(LOGIN_ID, signInData.loginId);
+              saveToLocalStorage(LOGIN_ID, signInData.userName);
               const signInReqestData = {
-                //requestId: generateRequestId(),
+                ///requestId: generateRequestId(),
+                requestId: "1675411430643",
                 loginId: signInData.loginId,
                 basicAuthToken: getFromLocalStorage(BASIC_AUTH_TOKKEN),
-               // contentData: encryptedLoginData,
+                contentData: encryptedLoginData,
+               //basicAuthToken:"DFd11DSyHyYTQ+D2jANn+1GnmiEu8Or5ukAWmLNp5R7cMdVzHBVpxe8kJA6yVx/4QdbLmL3tOnHQny54RCFORKC7QrwpwjOoCi8c8q7Vw3dlvkSVoxdQ3LoBhxzd5WwSqsYUTb4gtVLYS2qAsUKIMJuwmCBYQB2nqdz72h6cTfl6M8RQhu7wHjAcPOxoYxLK4X+ixQ+DkqSthk8lHnUxPw==",
+               //contentData: "Kdkg1mAiYg5qo1BebxYth2Gdu6ooHepG7fUxcSiL/na9LPi20S/dDyuas87yygSxHGacfayBKnkC6nrrFl0="
               };
 
              
@@ -179,13 +186,23 @@ function LoginFieldBox() {
                  
                 })
                 .catch((error) => {
-                  //if(error.response!=null)
+                  if(error.data.responseCode!=-1){
                   const message =
                     error.response != null ? error.response : error.message;
                   showErrorAlert(
                     error.message,
                     ERROR_WHILE_AUTHENTICATING_USER + JSON.stringify(message)
+                
                   );
+                }else{
+                  DebugLog("  error.data   "+JSON.stringify(error.data))
+                  const message =
+                  error.data != null ? error.data.displayErrorMessage : error.message;
+                showErrorAlert(
+                  ERROR,
+                  ERROR_WHILE_AUTHENTICATING_USER + JSON.stringify(message)
+                );
+                }
                 });
             })
             .catch((error) => {
@@ -385,7 +402,7 @@ const checkoutSchema = yup.object().shape({
 const initialValues = {
   //   user: "",
   //   lastName: "",
-  emailValue: "a0002_thasha",
+  emailValue: "bizops",
   passwordValue: "ytlc@xm1234",
   //   address1: "",
   //   address2: "",
