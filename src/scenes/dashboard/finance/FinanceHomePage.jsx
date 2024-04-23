@@ -231,7 +231,8 @@ const FinanceHomePage = () => {
           {/* Greetings Header */}
 
           {/* Highlights Section */}
-          <Grid container direction={"row"} spacing={3}>
+          <Box sx={{ whiteSpace:"pre" }}>
+          <Grid container spacing={3}>
             <HighlightBox
               highlightName={"To Approve"}
               highlightCount={"100"}
@@ -256,6 +257,7 @@ const FinanceHomePage = () => {
               highlightIcon={"../../assets/common/Validations.svg"}
             ></HighlightBox>
           </Grid>
+          </Box>
           {/* Highlights Section */}
 
           {/* Payouts Section */}

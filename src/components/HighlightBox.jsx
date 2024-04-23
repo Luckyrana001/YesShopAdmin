@@ -30,7 +30,7 @@ const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightCol
               <Grid
                 item
                 sx={{
-                  margin: "20px 0 0 30px",
+                  margin: "0px 0 0 20px",
                   padding: "0",
                   fontSize: "18px",
                   fontWeight: "600",
