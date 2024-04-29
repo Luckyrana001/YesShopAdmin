@@ -19,6 +19,7 @@ export const REPORTS_ROUTE = '/reports';
 export const REPORTS_FILTER_ROUTE = "/reportDetails";
 export const ADJUSTMENT_ROUTE = '/adjustment';
 export const EARMARK_ROUTE = '/earkmark';
+export const SUCCESS = '/success';
 
 
 

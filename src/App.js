@@ -13,6 +13,7 @@ import Payouts from "./scenes/payouts";
 import Invoices from "./scenes/invoices";
 import Contacts from "./scenes/contacts";
 import DataGridDemo from "./scenes/contacts/DataGridDemo";
+import Success from "./scenes/success/success";
 
 
 import FAQ from "./scenes/faq";
@@ -82,7 +83,7 @@ const handleProgressClick = (event) => {
               <Route path={CONSTANT.REPORTS_ROUTE} element={<FAQ />} />
               <Route path={CONSTANT.REPORTS_FILTER_ROUTE} element={<FilterReports />} />
               <Route path={CONSTANT.EARMARK_ROUTE} element={<EarmarkScreen />} />
-
+              <Route path={CONSTANT.SUCCESS} element={<Success />} />
               
 
               

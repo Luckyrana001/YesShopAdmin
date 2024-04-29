@@ -2,6 +2,7 @@ import { tokens } from "../../theme";
 import * as React from "react";
 
 import { Box, Button, IconButton, Typography,useTheme } from "@mui/material";
+import { Link } from 'react-router-dom';
 import GreetingHeader from "../../components/GreetingHeader";
 import SectionHeader from "../../components/SectionHeader";
 import HighlightsPrimary from "../../components/HighlightsPrimary";
@@ -330,8 +331,6 @@ async function getPayoutDetail() {
 
       {/* Validations Section */}
       <Grid
-
-        mt={3}
         // border={"1px solid" + colors.grey[600]}
         borderRadius={2}
         xs={12}
@@ -369,6 +368,17 @@ async function getPayoutDetail() {
           sectionIcon={"../../assets/common/Payouts.svg"}
           sectionHeading={"Payouts"}
         ></SectionHeader>
+
+        <Link to="/success">
+          <CustomButton
+              btnBG={colors.grey[900]}
+              btnColor={colors.grey[100]}
+              btnStartIcon={
+                <img src="../../assets/common/Tick.svg" width={22} />
+              }
+              btnTxt={"Success"}
+            ></CustomButton>
+          </Link>
 
 {payoutSummary.length > 0 ? (
               <Box
@@ -428,6 +438,8 @@ async function getPayoutDetail() {
                   pagination
                   onPageChange={handlePageChange}
                 />
+
+
               </Box>
             ) : (
               NoDataFound()
