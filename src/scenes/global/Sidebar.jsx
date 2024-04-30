@@ -1,6 +1,6 @@
 import * as React from "react";
-import { useEffect, useState } from 'react';
-
+import { useEffect, useState } from "react";
+import isEmptyArray from "lodash/isEmpty";
 
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme, Icon } from "@mui/material";
@@ -20,59 +20,109 @@ import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutl
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
-import { collapseMenu, isAuthPageAtom, openSlidingMenu } from "../../config/AppConfig";
+import {
+  collapseMenu,
+  isAuthPageAtom,
+  openSlidingMenu,
+  sessionIdStatus,
+} from "../../config/AppConfig";
 import { useAtom } from "jotai";
 import { BackButtonListener } from "../../components/BackButtonListener";
-import { ADJUSTMENT_ROUTE, CREDIT_DEBIT_ROUTE, EARMARK_ROUTE, EXCLUSION_ROUTE, FINANCE_DASHBOARD, FREEZE_ACCOUNT_ROUTE, ON_HOLD_ROUTE, PAYOUT_DATES_ROUTE, PAYOUT_ROUTE, REPORTS_ROUTE, VALIDATION_ROUTE, WITHOLDING_TAX_ROUTE } from "../../constants/Constant";
+import {
+  ADJUSTMENT_ROUTE,
+  CREDIT_DEBIT_ROUTE,
+  EARMARK_ROUTE,
+  EXCLUSION_ROUTE,
+  FINANCE_DASHBOARD,
+  FREEZE_ACCOUNT_ROUTE,
+  ON_HOLD_ROUTE,
+  PAYOUT_DATES_ROUTE,
+  PAYOUT_ROUTE,
+  REPORTS_ROUTE,
+  VALIDATION_ROUTE,
+  WITHOLDING_TAX_ROUTE,
+} from "../../constants/Constant";
 
 /* NEW ICONS */
 
 // import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
-import OtherHousesOutlinedIcon from '@mui/icons-material/OtherHousesOutlined';
-import GppMaybeOutlinedIcon from '@mui/icons-material/GppMaybeOutlined';
-import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOutlined';
-import PauseOutlinedIcon from '@mui/icons-material/PauseOutlined';
-import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
-import PersonRemoveOutlinedIcon from '@mui/icons-material/PersonRemoveOutlined';
-import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
-import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
-import AcUnitOutlinedIcon from '@mui/icons-material/AcUnitOutlined';
-import PercentOutlinedIcon from '@mui/icons-material/PercentOutlined';
+import OtherHousesOutlinedIcon from "@mui/icons-material/OtherHousesOutlined";
+import GppMaybeOutlinedIcon from "@mui/icons-material/GppMaybeOutlined";
+import CurrencyExchangeOutlinedIcon from "@mui/icons-material/CurrencyExchangeOutlined";
+import PauseOutlinedIcon from "@mui/icons-material/PauseOutlined";
+import DoNotDisturbAltOutlinedIcon from "@mui/icons-material/DoNotDisturbAltOutlined";
+import PersonRemoveOutlinedIcon from "@mui/icons-material/PersonRemoveOutlined";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import CalculateOutlinedIcon from "@mui/icons-material/CalculateOutlined";
+import AcUnitOutlinedIcon from "@mui/icons-material/AcUnitOutlined";
+import PercentOutlinedIcon from "@mui/icons-material/PercentOutlined";
 
-
-import { useContext } from 'react';
-import { SidebarContext } from '../../scenes/global/context/sidebarContext.jsx';
-import { ADJUSTMENT, CREDIT_DEBIT, DASHBOARD, EARMARK, EXCLUSION, FREEZE_ACCOUNT, ON_HOLD, PAYOUT, PAYOUT_DATES, REPORTS, VALIDATIONS, WITHOLDING_TAX } from "../../constants/Strings.jsx";
+import { useContext } from "react";
+import { SidebarContext } from "../../scenes/global/context/sidebarContext.jsx";
+import {
+  ADJUSTMENT,
+  CREDIT_DEBIT,
+  DASHBOARD,
+  EARMARK,
+  EXCLUSION,
+  FREEZE_ACCOUNT,
+  ON_HOLD,
+  PAYOUT,
+  PAYOUT_DATES,
+  REPORTS,
+  VALIDATIONS,
+  WITHOLDING_TAX,
+} from "../../constants/Strings.jsx";
 import ValidationScreen from "../validations/index.jsx";
+import {
+  getFromLocalStorage,
+  getFromLocalStorageJsonObject,
+} from "../../utils/localStorageUtils.js";
+import {
+  LOGIN_RESPONSE,
+  SESSION_ID,
+} from "../../constants/LocalStorageKeyValuePairString.jsx";
+import DebugLog from "../../utils/DebugLog.jsx";
 
-const Item = ({ title, to, icon, selected, setSelected }) => {
+const Item = ({ title, to, icon, selected, setSelected, visible }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
+  // useEffect(() => {
+  //   resetAllConfigration();
+
+  //   const basicAuthTokken = getFromLocalStorage(BASIC_AUTH_TOKKEN);
+  //   if (basicAuthTokken === undefined || basicAuthTokken === null)
+  //     requestBasicAuth(false);
+
+  //   showNoInternetSnackBar();
+  // }, [sessionIdState]);
 
   return (
-    <MenuItem
-      active={selected === title}
-      style={{
-        color: colors.grey[200],
-        // fontFamily: 'Montserrat Bold',
-        // fontWeight: "900"
-        
-      }}
-      onClick={
-        () => setSelected(title)
-      }
-      icon={icon}
-    >
-      <Typography
-        sx={{
-          fontSize: "0.9rem",
-          fontWeight: "500",
-        }}
-      
-      >{title}</Typography>
-      <Link to={to} />
-    </MenuItem>
+    <div>
+      {visible && (
+        <MenuItem
+          active={selected === title}
+          style={{
+            color: colors.grey[200],
+            // fontFamily: 'Montserrat Bold',
+            // fontWeight: "900"
+          }}
+          onClick={() => setSelected(title)}
+          icon={icon}
+        >
+          <Typography
+            sx={{
+              fontSize: "0.9rem",
+              fontWeight: "500",
+            }}
+          >
+            {title}
+          </Typography>
+          <Link to={to} />
+        </MenuItem>
+      )}
+    </div>
   );
 };
 
@@ -84,9 +134,20 @@ const Sidebar = () => {
 
   const [selected, setSelected] = useState("Dashboard");
   const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom);
-  const [slidingMenuStatus, setSlidingMenu] = useAtom(openSlidingMenu)
+  const [slidingMenuStatus, setSlidingMenu] = useAtom(openSlidingMenu);
+  const [sessionIdState, setSessionIdState] = useAtom(sessionIdStatus);
 
-
+  // menu hide / show logic
+  const [Validations, setValidations] = useState(false);
+  const [Formulas, setFormulas] = useState(false);
+  const [Payout, setPayout] = useState(false);
+  const [OnHold, setOnHold] = useState(false);
+  const [Exclusions, setExclusions] = useState(false);
+  const [PayoutDates, setPayoutDates] = useState(false);
+  const [WithholdingTax, setWithholdingTax] = useState(false);
+  const [Earmark, setEarmark] = useState(false);
+  const [FreezeAccount, setFreezeAccount] = useState(false);
+  const [DebitCredit, setDebitCredit] = useState(false);
 
   // reducer and context listening
   const [activeLinkIdx] = useState(3);
@@ -94,25 +155,101 @@ const Sidebar = () => {
   const { isSidebarOpen } = useContext(SidebarContext);
 
   useEffect(() => {
-   // setIsVisible(openSlidingMenu)
+    // setIsVisible(openSlidingMenu)
     //setSlidingMenu(openSlidingMenu);
-   // setIsCollapsed(openSlidingMenu)
+    // setIsCollapsed(openSlidingMenu)
 
-
-    if(isSidebarOpen){
-      setSidebarClass('sidebar-change');
+    if (isSidebarOpen) {
+      setSidebarClass("sidebar-change");
     } else {
-      setSidebarClass('');
+      setSidebarClass("");
     }
-  }, [isSidebarOpen,openSlidingMenu,collapseMenu]);
 
+    DebugLog(
+      "getFromLocalStorage(SESSION_ID)    " + getFromLocalStorage(SESSION_ID)
+    );
+    const sessionId = getFromLocalStorage(SESSION_ID);
+    try {
+      if (sessionId !== "") {
+        const userDetails = getFromLocalStorageJsonObject(LOGIN_RESPONSE);
+        DebugLog("userDetails from sidebar    " + JSON.stringify(userDetails));
+
+        let incentives = [];
+        let adjustments = [];
+
+        //const menuArray = userDetails
+        DebugLog("menuList from sidebar    " + JSON.stringify(userDetails));
+        if (!isEmptyArray(userDetails)) {
+          DebugLog("userDetails.length  ==== " + userDetails.length);
+          let menuListSize = userDetails.length;
+          if (menuListSize != null && menuListSize > 0) {
+            userDetails.forEach((item, index) => {
+              if (item.menuListName === "Incentive") {
+                incentives = [...item.menuItem];
+              } else if (item.menuListName === "Adjustment") {
+                adjustments = [...item.menuItem];
+              }
+            });
+
+            DebugLog(
+              "incentives from sidebar    " + JSON.stringify(incentives)
+            );
+
+            DebugLog(
+              "adjustments from sidebar    " + JSON.stringify(adjustments)
+            );
+
+            setPayout(false);
+            setOnHold(false);
+            setExclusions(false);
+            setPayoutDates(false);
+            setWithholdingTax(false);
+            setEarmark(false);
+            setFreezeAccount(false);
+
+            incentives.forEach((item, index) => {
+              if (item.menuName === "Payout") {
+                setPayout(true);
+              } else if (item.menuName === "On Hold") {
+                setOnHold(true);
+              } else if (item.menuName === "Exclusions") {
+                setExclusions(true);
+              } else if (item.menuName === "Payout Dates") {
+                setPayoutDates(true);
+              } else if (item.menuName === "Withholding Tax") {
+                setWithholdingTax(true);
+              } else if (item.menuName === "Validations") {
+                setEarmark(true);
+              } else if (item.menuName === "Formulas") {
+                setFreezeAccount(true);
+              }
+            });
+            setEarmark(false);
+            setFreezeAccount(false);
+            setDebitCredit(false);
+            adjustments.forEach((item, index) => {
+              if (item.menuName === "Earmark") {
+                setEarmark(true);
+              } else if (item.menuName === "Freeze Account") {
+                setFreezeAccount(true);
+              } else if (item.menuName === "Debit/Credit") {
+                setDebitCredit(true);
+              }
+            });
+          }
+        }
+      }
+    } catch (error) {
+      DebugLog(error);
+    }
+  }, [isSidebarOpen, openSlidingMenu, collapseMenu, sessionIdState]);
 
   return (
-    <div className={ `sidebar ${sidebarClass}` }>
+    <div className={`sidebar ${sidebarClass}`}>
       {!isAuthPage ? (
         <Box
           alignItems={"space-around"}
-         // visibility={isVisible}
+          // visibility={isVisible}
           sx={{
             "& .pro-sidebar-inner": {
               background: `${colors.white[50]} !important`,
@@ -141,9 +278,8 @@ const Sidebar = () => {
           }}
         >
           <BackButtonListener></BackButtonListener>
-          
 
-          <ProSidebar collapsed={isCollapsed} sx={{height:"100vh"}}>
+          <ProSidebar collapsed={isCollapsed} sx={{ height: "100vh" }}>
             <Menu iconShape="square">
               {/* LOGO AND MENU ICON */}
               <MenuItem
@@ -161,7 +297,6 @@ const Sidebar = () => {
                     alignItems="center"
                     ml="15px"
                   >
-                    
                     <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                       <MenuOutlinedIcon />
                     </IconButton>
@@ -184,11 +319,12 @@ const Sidebar = () => {
 
               <Box pt={2} paddingLeft={isCollapsed ? undefined : "10%"}>
                 <Item
-                   title={DASHBOARD}
+                  title={DASHBOARD}
                   to={FINANCE_DASHBOARD}
                   icon={<OtherHousesOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={true}
                   sx={{ fontWeight: "700", m: 1 }}
                 />
 
@@ -200,33 +336,37 @@ const Sidebar = () => {
                   Incentive
                 </Typography> */}
                 <Item
-                   title={VALIDATIONS}
+                  title={VALIDATIONS}
                   to={VALIDATION_ROUTE}
                   icon={<GppMaybeOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={Validations}
                 />
 
                 <Item
-                    title={PAYOUT}
+                  title={PAYOUT}
                   to={PAYOUT_ROUTE}
                   icon={<CurrencyExchangeOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={Payout}
                 />
                 <Item
-                 title={ON_HOLD}
+                  title={ON_HOLD}
                   to={ON_HOLD_ROUTE}
                   icon={<PauseOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={OnHold}
                 />
                 <Item
-                 title={EXCLUSION}
+                  title={EXCLUSION}
                   to={EXCLUSION_ROUTE}
                   icon={<DoNotDisturbAltOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={Exclusions}
                 />
                 {/* <Item
                   title="Formulas"
@@ -236,18 +376,20 @@ const Sidebar = () => {
                   setSelected={setSelected}
                 /> */}
                 <Item
-                 title={PAYOUT_DATES}
+                  title={PAYOUT_DATES}
                   to={PAYOUT_DATES_ROUTE}
                   icon={<CalendarTodayOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={PayoutDates}
                 />
                 <Item
-                 title={WITHOLDING_TAX}
+                  title={WITHOLDING_TAX}
                   to={WITHOLDING_TAX_ROUTE}
                   icon={<PersonRemoveOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={WithholdingTax}
                 />
                 {/* <Typography
                   variant="h6"
@@ -258,33 +400,37 @@ const Sidebar = () => {
                 </Typography> */}
 
                 <Item
-                 title={REPORTS}
+                  title={REPORTS}
                   to={REPORTS_ROUTE}
                   icon={<ArticleOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={true}
                 />
 
                 <Item
-                    title={ADJUSTMENT}
+                  title={ADJUSTMENT}
                   to={ADJUSTMENT_ROUTE}
                   icon={<CalculateOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={true}
                 />
                 <Item
-                   title={EARMARK}
+                  title={EARMARK}
                   to={EARMARK_ROUTE}
                   icon={<ContactsOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={Earmark}
                 />
                 <Item
-                   title={FREEZE_ACCOUNT}
+                  title={FREEZE_ACCOUNT}
                   to={FREEZE_ACCOUNT_ROUTE}
                   icon={<AcUnitOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={FreezeAccount}
                 />
 
                 {/* <Typography
@@ -300,6 +446,7 @@ const Sidebar = () => {
                   icon={<PercentOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
+                  visible={DebitCredit}
                 />
                 {/* <Item
                   title="Calendar"

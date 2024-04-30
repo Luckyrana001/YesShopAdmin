@@ -1,6 +1,5 @@
 import { Typography } from "@mui/material";
 
-
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import { tokens } from "../../theme";
@@ -27,6 +26,7 @@ import {
 import {
   ALERT,
   ERROR_FOUND_DURING_API_CALL,
+  ERROR_WHILE_FETCHING_DATA,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
   YOU_ARE_OFFLINE,
@@ -42,6 +42,8 @@ import { getOnHoldSummary } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
 import { onHoldSummaryColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
+import { ApiErrorCode } from "../../services/ApiTags";
+import UserActivityInfo from "../../components/UserActivity";
 
 export function CreditDebitScreen() {
   const theme = useTheme();
@@ -67,7 +69,6 @@ export function CreditDebitScreen() {
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
-
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
   };
@@ -82,8 +83,8 @@ export function CreditDebitScreen() {
     setCurrentPage(newPage);
   };
 
-   // increase - decrease list layout height on available list itmes count
-   function getDataGridHeight() {
+  // increase - decrease list layout height on available list itmes count
+  function getDataGridHeight() {
     // Calculate the total height required for the grid
     const headerHeight = 100; // Height of header row
     const rowHeight = 100; // Height of each data row
@@ -94,7 +95,15 @@ export function CreditDebitScreen() {
     setGridHeight(totalHeight);
   }
 
+  function checkUserAuthExistOrNot() {
+    if (getFromLocalStorage(SESSION_ID) === "") {
+      navigate("/");
+      return;
+    }
+  }
+
   useEffect(() => {
+    checkUserAuthExistOrNot();
 
     getDataGridHeight();
 
@@ -104,8 +113,6 @@ export function CreditDebitScreen() {
 
     navigate(blockNavigation);
   }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
-
- 
 
   function requestOnHoldSummaryData() {
     try {
@@ -127,12 +134,22 @@ export function CreditDebitScreen() {
             setLoading(false);
           })
           .catch((error) => {
-            const message =
-              error.response != null ? error.response : error.message;
-            showErrorAlert(
-              error.message,
-              ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
-            );
+            if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+              try {
+                navigate("/");
+              } catch (error) {
+                DebugLog("error " + error);
+              }
+            } else {
+              const message =
+                error.response != null ? error.displayErrorMessage : "Unknown";
+
+              if (message)
+                showErrorAlert(
+                  error.message,
+                  ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                );
+            }
           });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
@@ -304,7 +321,6 @@ export function CreditDebitScreen() {
             ) : (
               NoDataFound()
             )}
-            
           </Grid>
 
           {onHoldSummary.length > 0 ? (
@@ -329,43 +345,47 @@ export function CreditDebitScreen() {
           {/* Action Buttons */}
 
           {onHoldSummary.length > 0 ? (
-          <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
-            <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-              <CustomButton
-                btnBG={colors.grey[900]}
-                btnColor={colors.grey[100]}
-                btnStartIcon={
-                  <img src="../../assets/common/Cross.svg" width={22} />
-                }
-                btnTxt={"Cancel"}
-              ></CustomButton>
+            <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
+              <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                  btnStartIcon={
+                    <img src="../../assets/common/Cross.svg" width={22} />
+                  }
+                  btnTxt={"Cancel"}
+                ></CustomButton>
 
-              <CustomButton
-                btnBG={colors.grey[900]}
-                btnColor={colors.grey[100]}
-                btnStartIcon={
-                  <img src="../../assets/common/Tick.svg" width={22} />
-                }
-                btnTxt={"Release"}
-              ></CustomButton>
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                  btnStartIcon={
+                    <img src="../../assets/common/Tick.svg" width={22} />
+                  }
+                  btnTxt={"Release"}
+                ></CustomButton>
 
-              <CustomButton
-                btnBG={colors.grey[900]}
-                btnColor={colors.grey[100]}
-                btnStartIcon={
-                  <img src="../../assets/common/Download.svg" width={22} />
-                }
-                btnEndIcon={
-                  <img src="../../assets/common/Arrow-down.svg" height={8} />
-                }
-                btnTxt={"Download"}
-              ></CustomButton>
-            </Stack>
-          </Grid>
-  ) : (
-    ""
-  )}
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                  btnStartIcon={
+                    <img src="../../assets/common/Download.svg" width={22} />
+                  }
+                  btnEndIcon={
+                    <img src="../../assets/common/Arrow-down.svg" height={8} />
+                  }
+                  btnTxt={"Download"}
+                ></CustomButton>
+              </Stack>
+            </Grid>
+          ) : (
+            ""
+          )}
           {/* Action Buttons */}
+
+            {/* activity list */}
+            <UserActivityInfo/>
+             {/* activity list */}
         </Grid>
       </SnackbarProvider>
     </Box>

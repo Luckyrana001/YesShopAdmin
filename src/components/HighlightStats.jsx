@@ -14,7 +14,6 @@ const HighlightStats = ({
   highlight3Stat,
   highlight4,
   highlight4Stat,
-
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -95,104 +94,100 @@ const HighlightStats = ({
         justifyContent={"space-around"}
       >
         <Grid container direction={"column"} justifyContent={"space-evenly"}>
-            <Grid
+          <Grid
             item
             sx={{
-                fontWeight: "500",
-                color: colors.grey[300],
-                fontSize: "15px",
-                textTransform: "uppercase",
+              fontWeight: "500",
+              color: colors.grey[300],
+              fontSize: "15px",
+              textTransform: "uppercase",
             }}
-            >
+          >
             {highlight1}
-            </Grid>
-            <Grid
+          </Grid>
+          <Grid
             item
             alignItems={"center"}
             sx={{
-                fontSize: "26px",
-                fontWeight: "600",
+              fontSize: "26px",
+              fontWeight: "600",
             }}
-            >
+          >
             {highlight1Stat}
-            </Grid>
+          </Grid>
         </Grid>
         <Grid container direction={"column"} justifyContent={"space-evenly"}>
-            <Grid
+          <Grid
             item
             sx={{
-                fontWeight: "500",
-                color: colors.grey[300],
-                fontSize: "15px",
-                textTransform: "uppercase",
+              fontWeight: "500",
+              color: colors.grey[300],
+              fontSize: "15px",
+              textTransform: "uppercase",
             }}
-            >
+          >
             {highlight2}
-            </Grid>
-            <Grid
+          </Grid>
+          <Grid
             item
             alignItems={"center"}
             sx={{
-                fontSize: "26px",
-                fontWeight: "600",
+              fontSize: "26px",
+              fontWeight: "600",
             }}
-            >
+          >
             {highlight2Stat}
-            </Grid>
+          </Grid>
         </Grid>
         <Grid container direction={"column"} justifyContent={"space-evenly"}>
-            <Grid
+          <Grid
             item
             sx={{
-                fontWeight: "500",
-                color: colors.grey[300],
-                fontSize: "15px",
-                textTransform: "uppercase",
+              fontWeight: "500",
+              color: colors.grey[300],
+              fontSize: "15px",
+              textTransform: "uppercase",
             }}
-            >
+          >
             {highlight3}
-            </Grid>
-            <Grid
+          </Grid>
+          <Grid
             item
             alignItems={"center"}
             sx={{
-                fontSize: "26px",
-                fontWeight: "600",
+              fontSize: "26px",
+              fontWeight: "600",
             }}
-            >
+          >
             {highlight3Stat}
-            </Grid>
+          </Grid>
         </Grid>
-
 
         <Grid container direction={"column"} justifyContent={"space-evenly"}>
-            <Grid
+          <Grid
             item
             sx={{
-                fontWeight: "500",
-                color: colors.grey[300],
-                fontSize: "15px",
-                textTransform: "uppercase",
+              fontWeight: "500",
+              color: colors.grey[300],
+              fontSize: "15px",
+              textTransform: "uppercase",
             }}
-            >
+          >
             {highlight4}
-            </Grid>
-            <Grid
+          </Grid>
+          <Grid
             item
             alignItems={"center"}
             sx={{
-                fontSize: "26px",
-                fontWeight: "600",
+              fontSize: "26px",
+              fontWeight: "600",
             }}
-            >
+          >
             {highlight4Stat}
-            </Grid>
+          </Grid>
         </Grid>
-        
       </Grid>
-
-
-      </Grid>
+    </Grid>
   );
 };
 

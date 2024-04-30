@@ -1,5 +1,4 @@
-import { Typography } from "@mui/material";
-
+import { Avatar, Typography } from "@mui/material";
 
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
@@ -19,6 +18,8 @@ import { getFromLocalStorage } from "../../utils/localStorageUtils";
 import CustomProgressDialog from "../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../components/ErrorAlertDialog";
 import { useAtom } from "jotai";
+import * as CONSTANT from "../../constants/Constant";
+
 import {
   globalSearchText,
   isAuthPageAtom,
@@ -27,6 +28,7 @@ import {
 import {
   ALERT,
   ERROR_FOUND_DURING_API_CALL,
+  ERROR_WHILE_FETCHING_DATA,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
   YOU_ARE_OFFLINE,
@@ -35,13 +37,18 @@ import {
 import DebugLog from "../../utils/DebugLog";
 import {
   LOGIN_ID,
+  MESSAGE_KEY,
   SESSION_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
-import { generateRequestId } from "../../utils/RequestIdGenerator";
-import { getOnHoldSummary } from "../../services/ApiService";
+import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
+import { getEarMarkDetails } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
-import { onHoldSummaryColumnHeader } from "../../components/ColumnHeader";
+import { earmarksDetailsColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
+import { ApiErrorCode, ApiType } from "../../services/ApiTags";
+import UserActivityInfo from "../../components/UserActivity";
+import { initializeEncryption } from "../../services/AesGcmEncryption";
+import AddEarmarkDialogInput from "./AddEarmarkDialog";
 
 export function EarmarkScreen() {
   const theme = useTheme();
@@ -59,20 +66,28 @@ export function EarmarkScreen() {
   const [, setError] = useState("");
   const [getProgressbarText, setProgressbarText] = useState("");
 
-  const [onHoldSummary, setOnHoldSummary] = useState([]);
-  const [onHoldData, setOnHoldData] = useState([]);
+  const [earmarkDetails, setearmarkDetails] = useState([]);
   const [gridHeight, setGridHeight] = useState(108); // Default height
   const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
+  const [open, setOpen] = useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
   };
 
-  const filteredRows = onHoldSummary.filter((row) =>
+  const filteredRows = earmarkDetails.filter((row) =>
     Object.values(row).some((value) =>
       String(value).toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -82,8 +97,12 @@ export function EarmarkScreen() {
     setCurrentPage(newPage);
   };
 
-   // increase - decrease list layout height on available list itmes count
-   function getDataGridHeight() {
+  function addNewEarmark(){
+    setOpen(true);
+  }
+
+  // increase - decrease list layout height on available list itmes count
+  function getDataGridHeight() {
     // Calculate the total height required for the grid
     const headerHeight = 100; // Height of header row
     const rowHeight = 100; // Height of each data row
@@ -94,46 +113,87 @@ export function EarmarkScreen() {
     setGridHeight(totalHeight);
   }
 
+  function checkUserAuthExistOrNot() {
+    if (getFromLocalStorage(SESSION_ID) === "") {
+      navigate("/");
+      return;
+    }
+  }
+
   useEffect(() => {
+    checkUserAuthExistOrNot();
 
     getDataGridHeight();
 
-    requestOnHoldSummaryData();
+    requestEarMarkDetailsData();
 
     showNoInternetSnackBar();
 
     navigate(blockNavigation);
   }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
 
- 
-
-  function requestOnHoldSummaryData() {
+  function requestEarMarkDetailsData() {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); // Hide the progress dialog
+        setLoading(true); 
 
-        const requestData = {
-          requestId: generateRequestId(),
-          loginId: getFromLocalStorage(LOGIN_ID),
-          sessionId: getFromLocalStorage(SESSION_ID),
-          //contentData: encryptedContentData,
+        const requestObject = {
+          pageNumber: 0,
+          pageSize: 100,
         };
 
-        getOnHoldSummary(requestData)
-          .then((response) => {
-            setOnHoldSummary(response.data.result.onHoldSummaryList);
-            setTotalNoOfRows(response.data.result.onHoldSummaryList.length);
-            setLoading(false);
-          })
-          .catch((error) => {
-            const message =
-              error.response != null ? error.response : error.message;
-            showErrorAlert(
-              error.message,
-              ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
-            );
-          });
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const onholdCompanyRequestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          getEarMarkDetails(onholdCompanyRequestData)
+            .then((response) => {
+              const contentData = response.data.result.earmarkDetails.content.map((row) => ({
+                ...row,
+                id: generateRandomId(),
+              }));
+              setearmarkDetails(contentData);
+              setTotalNoOfRows(response.data.result.earmarkDetails.content.length);
+              setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
       }
@@ -141,7 +201,7 @@ export function EarmarkScreen() {
       const message = error.response != null ? error.response : error.message;
       showErrorAlert(
         error.message,
-        ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
       );
     }
   }
@@ -158,7 +218,7 @@ export function EarmarkScreen() {
 
   function showErrorAlert(title, content) {
     try {
-      DebugLog("an error found====" + content);
+    
       setError();
       setLoading(false);
 
@@ -185,6 +245,7 @@ export function EarmarkScreen() {
     <Box>
       <SnackbarProvider maxSnack={3}>
         <ConnectionStatus />
+        <AddEarmarkDialogInput open={open} onClose={handleClose} />
         <ShowErrorAlertDialog
           status={getDialogStatus}
           title={title}
@@ -208,7 +269,7 @@ export function EarmarkScreen() {
           {/* Greetings Header */}
           <Grid container>
             <Grid item>
-              <GreetingHeader name={"On Hold"}></GreetingHeader>
+              <GreetingHeader name={"Earmark"}></GreetingHeader>
             </Grid>
           </Grid>
           {/* Greetings Header */}
@@ -238,12 +299,12 @@ export function EarmarkScreen() {
             xl={12}
             pb={2}
           >
-            <SectionHeader
+            {/* <SectionHeader
               sectionIcon={"../../assets/common/onhold.svg"}
               sectionHeading={"On Hold"}
-            ></SectionHeader>
+            ></SectionHeader> */}
 
-            {onHoldSummary.length > 0 ? (
+            {earmarkDetails.length > 0 ? (
               <Box
                 borderRadius={3}
                 flex={1}
@@ -291,7 +352,7 @@ export function EarmarkScreen() {
                     currentPage * pageSize,
                     (currentPage + 1) * pageSize
                   )}
-                  columns={onHoldSummaryColumnHeader}
+                  columns={earmarksDetailsColumnHeader}
                   components={{ Toolbar: GridToolbar }}
                   checkboxSelection
                   selecion
@@ -304,10 +365,9 @@ export function EarmarkScreen() {
             ) : (
               NoDataFound()
             )}
-            
           </Grid>
 
-          {onHoldSummary.length > 0 ? (
+          {earmarkDetails.length > 0 ? (
             <Box>
               <Typography>
                 <span>Jump to page: </span>
@@ -328,44 +388,43 @@ export function EarmarkScreen() {
 
           {/* Action Buttons */}
 
-          {onHoldSummary.length > 0 ? (
-          <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
-            <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-              <CustomButton
-                btnBG={colors.grey[900]}
-                btnColor={colors.grey[100]}
-                btnStartIcon={
-                  <img src="../../assets/common/Cross.svg" width={22} />
-                }
-                btnTxt={"Cancel"}
-              ></CustomButton>
+          {earmarkDetails.length > 0 ? (
+            <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
+              <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
+               
 
-              <CustomButton
-                btnBG={colors.grey[900]}
-                btnColor={colors.grey[100]}
-                btnStartIcon={
-                  <img src="../../assets/common/Tick.svg" width={22} />
-                }
-                btnTxt={"Release"}
-              ></CustomButton>
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                 
+                  btnTxt={"ADD NEW"}
+                  onClick={addNewEarmark}
+                ></CustomButton>
 
-              <CustomButton
-                btnBG={colors.grey[900]}
-                btnColor={colors.grey[100]}
-                btnStartIcon={
-                  <img src="../../assets/common/Download.svg" width={22} />
-                }
-                btnEndIcon={
-                  <img src="../../assets/common/Arrow-down.svg" height={8} />
-                }
-                btnTxt={"Download"}
-              ></CustomButton>
-            </Stack>
-          </Grid>
-  ) : (
-    ""
-  )}
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                  btnStartIcon={
+                    <img src="../../assets/common/Download.svg" width={22} />
+                  }
+                  btnEndIcon={
+                    <img src="../../assets/common/Arrow-down.svg" height={8} />
+                  }
+                  btnTxt={"Download"}
+                ></CustomButton>
+              </Stack>
+            </Grid>
+          ) : (
+            ""
+          )}
           {/* Action Buttons */}
+
+
+         {/* activity list */}
+          <UserActivityInfo/>
+             {/* activity list */}
+                
+           
         </Grid>
       </SnackbarProvider>
     </Box>

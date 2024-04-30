@@ -1,4 +1,7 @@
-import { Typography } from "@mui/material";
+import { IconButton, Typography } from "@mui/material";
+
+import { initializeEncryption } from "../../services/AesGcmEncryption";
+import * as CONSTANT from "../../constants/Constant";
 
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
@@ -14,7 +17,10 @@ import { useEffect, useState } from "react";
 import ConnectionStatus from "../../utils/ConnectionStatus";
 import { SnackbarProvider, useSnackbar } from "notistack";
 import UseOnlineStatus from "../../utils/UseOnlineStatus";
-import { getFromLocalStorage } from "../../utils/localStorageUtils";
+import {
+  getFromLocalStorage,
+  getFromLocalStorageJsonObject,
+} from "../../utils/localStorageUtils";
 import CustomProgressDialog from "../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../components/ErrorAlertDialog";
 import { useAtom } from "jotai";
@@ -35,25 +41,34 @@ import {
 import DebugLog from "../../utils/DebugLog";
 import {
   LOGIN_ID,
+  MESSAGE_KEY,
+  NAV_ONHOLD_ALL_TRANSACTIONS,
+  NAV_ONHOLD_DETAILS,
   SESSION_ID,
+  USER_ROLE,
 } from "../../constants/LocalStorageKeyValuePairString";
 import {
   generateRandomId,
   generateRequestId,
 } from "../../utils/RequestIdGenerator";
 import {
+  getOnHoldCompany,
+  getOnHoldPayoutCycle,
   getOnHoldSummary,
-  getWitholdingTaxDetails,
+  onHoldCompanyPayoutTransaction,
 } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
 import {
+  onHoldAllTransactionColumnHeader,
+  onHoldCompanyColumnHeader,
+  onHoldPayoutCycleColumnHeader,
   onHoldSummaryColumnHeader,
-  withholdingTaxColumnHeader,
+  payoutAllTransactionColumnHeader,
 } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
-import { ApiErrorCode } from "../../services/ApiTags";
+import { ApiErrorCode, ApiType } from "../../services/ApiTags";
 
-export function WitholdingTaxScreen() {
+export function OnHoldAllTransactionsDetails() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
@@ -68,27 +83,35 @@ export function WitholdingTaxScreen() {
   const [content, setContent] = useState("");
   const [, setError] = useState("");
   const [getProgressbarText, setProgressbarText] = useState("");
+  const [userRole, setUserRole] = useState([]);
 
-  const [witholdingTaxDetails, setWitholdingTaxDetails] = useState([]);
-  const [onHoldData, setOnHoldData] = useState([]);
+  const [onHoldSummary, setOnHoldSummary] = useState([]);
   const [gridHeight, setGridHeight] = useState(108); // Default height
-  const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
-  const [pageSize, setPageSize] = useState(25);
+  const [totalNoOfRows, setTotalNoOfRows] = useState(10); // Default height
+  const [pageSize, setPageSize] = useState(100);
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
+  const [selectedRows, setSelectedRows] = React.useState([]);
 
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
   };
 
-  const filteredRows = witholdingTaxDetails.filter((row) =>
+  const filteredRows = onHoldSummary.filter((row) =>
     Object.values(row).some((value) =>
       String(value).toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
-
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
+  };
+
+  const handleSelectionChange = (newSelection) => {
+    setSelectedRows(newSelection);
+  };
+
+  const resetSelection = () => {
+    setSelectedRows([]);
   };
 
   // increase - decrease list layout height on available list itmes count
@@ -110,60 +133,80 @@ export function WitholdingTaxScreen() {
     }
   }
 
+  function getUserRole() {
+    setUserRole(getFromLocalStorage(USER_ROLE));
+  }
+
   useEffect(() => {
+    getUserRole();
     checkUserAuthExistOrNot();
 
     getDataGridHeight();
 
-    requestWitholdingTaxDetails();
+    requestOnHoldDetails();
 
     showNoInternetSnackBar();
 
     navigate(blockNavigation);
   }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
 
-  function requestWitholdingTaxDetails() {
+  function requestOnHoldDetails() {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
         setLoading(true); // Hide the progress dialog
 
-        const requestData = {
-          requestId: generateRequestId(),
-          loginId: getFromLocalStorage(LOGIN_ID),
-          sessionId: getFromLocalStorage(SESSION_ID),
-          //contentData: encryptedContentData,
-        };
+        initializeEncryption(
+          getFromLocalStorageJsonObject(NAV_ONHOLD_ALL_TRANSACTIONS),
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.ON_HOLD_COMPANY_DETAILS
+        ).then((encryptedContentData) => {
+          const onholdCompanyRequestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
 
-        getWitholdingTaxDetails(requestData)
-          .then((response) => {
-            // Map through the original data and assign random IDs to rows
-            const rowsWithIds = response.data.result.withholdingTaxDetails.map(
-              (row) => ({ ...row, id: generateRandomId() })
-            );
+          onHoldCompanyPayoutTransaction(onholdCompanyRequestData)
+            .then((response) => {
+              const contentData = response.data.result.content.map((row) => ({
+                ...row,
+                id: generateRandomId(),
+              }));
+              setOnHoldSummary(contentData);
+              setTotalNoOfRows(response.data.result.content.length);
+              setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
 
-            setWitholdingTaxDetails(rowsWithIds);
-            setTotalNoOfRows(response.data.result.withholdingTaxDetails.length);
-            setLoading(false);
-          })
-          .catch((error) => {
-            if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
-              try {
-                navigate("/");
-              } catch (error) {
-                DebugLog("error " + error);
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
               }
-            } else {
-              const message =
-                error.response != null ? error.displayErrorMessage : "Unknown";
-
-              if (message)
-                showErrorAlert(
-                  error.message,
-                  ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
-                );
-            }
-          });
+            });
+        });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
       }
@@ -171,11 +214,47 @@ export function WitholdingTaxScreen() {
       const message = error.response != null ? error.response : error.message;
       showErrorAlert(
         error.message,
-        ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
       );
     }
   }
 
+  const cancelHold = () => {
+    const selectedData = onHoldSummary.filter((row) =>
+      selectedRows.includes(row.id)
+    );
+    console.log("Selected rows data:", selectedData);
+
+    if (selectedData.length > 0) {
+      //   //const navData = getFromLocalStorageJsonObject(NAV_PAYOUT_DETAIL_DATA)
+      //   DebugLog("nav Daat======="+JSON.stringify(navData))
+
+      //   const extractCompanyCode = selectedData.map(row => row.companyCode);
+
+      //  const  onHoldSelectedRowData = {
+
+      //     companyCode : extractCompanyCode,
+      //     cutOffDate: navData.cutOffDate,
+      //     payoutCycle: navData.payoutCycle,
+      //     payoutStatus: navData.payoutStatus,
+      //     payoutByDate:navData.payoutDate
+      //   };
+
+      //   DebugLog("onHoldSelectedRowData  Daat======="+JSON.stringify(onHoldSelectedRowData))
+      //   //requestPayoutOnHold(onHoldSelectedRowData)
+
+      showErrorAlert("", "COMING SOON!");
+
+      resetSelection();
+    } else {
+      showErrorAlert("Alert", "Please choose some rows first!");
+    }
+  };
+
+  const startDownload = () => {
+    showErrorAlert("", "COMING SOON!");
+    resetSelection();
+  };
   function blockNavigation(location, action) {
     // Block navigation if action is "pop", which indicates back/forward button press
     if (action === "pop") {
@@ -235,29 +314,40 @@ export function WitholdingTaxScreen() {
             borderRadius: "18px",
           }}
         >
-          {/* Greetings Header */}
-          <Grid container>
+          {/* Header */}
+          <Grid container direction={"row"} alignItems={"center"} mb={2} ml={2}>
+            <Grid item mr={2}>
+              <IconButton href={CONSTANT.ON_HOLD_DETAILS_ROUTE} width={12}>
+                <img src={"../../assets/common/Back.svg"} width={12} />
+              </IconButton>
+            </Grid>
             <Grid item>
-              <GreetingHeader name={"Withholding Tax"}></GreetingHeader>
+              <Typography
+                color={colors.grey[100]}
+                fontWeight={"600"}
+                variant="h3"
+              >
+                {
+                  getFromLocalStorageJsonObject(NAV_ONHOLD_ALL_TRANSACTIONS)
+                    .payoutCycle
+                }
+              </Typography>
             </Grid>
           </Grid>
-          {/* Greetings Header */}
-
+          {/* Header */}
           {/* Highlight Stats */}
           <HighlightStats
             highlightTotal={"100,000"}
-            highlight1={"Intervel"}
-            highlight1Stat={"1 Jan - 31 Dec 24"}
-            highlight2={"Dealers"}
-            highlight2Stat={"7"}
-            highlight3={"Confirmed"}
-            highlight3Stat={"3"}
-            highlight4={"UnConfirmed"}
-            highlight4Stat={"4"}
+            highlight1={"Dealers"}
+            highlight1Stat={"4"}
+            highlight2={"Device Reimburse"}
+            highlight2Stat={"RM 100"}
+            highlight3={"Incentives"}
+            highlight3Stat={"RM 31.47"}
           ></HighlightStats>
           {/* Highlight Stats */}
 
-          {/*list Section */}
+          {/* On Hold Section */}
           <Grid
             container
             mt={3}
@@ -270,12 +360,12 @@ export function WitholdingTaxScreen() {
             xl={12}
             pb={2}
           >
-            <SectionHeader
+            {/* <SectionHeader
               sectionIcon={"../../assets/common/onhold.svg"}
-              sectionHeading={"Withholding Tax"}
-            ></SectionHeader>
+              sectionHeading={"On Hold"}
+            ></SectionHeader> */}
 
-            {witholdingTaxDetails.length > 0 ? (
+            {onHoldSummary.length > 0 ? (
               <Box
                 borderRadius={3}
                 flex={1}
@@ -323,14 +413,15 @@ export function WitholdingTaxScreen() {
                     currentPage * pageSize,
                     (currentPage + 1) * pageSize
                   )}
-                  columns={withholdingTaxColumnHeader}
+                  columns={onHoldAllTransactionColumnHeader}
                   components={{ Toolbar: GridToolbar }}
                   checkboxSelection
-                  selecion
+                  selectionModel={selectedRows}
+                  onSelectionModelChange={handleSelectionChange}
+                  onPageChange={handlePageChange}
                   pageSize={pageSize}
                   rowCount={filteredRows.length}
                   pagination
-                  onPageChange={handlePageChange}
                 />
               </Box>
             ) : (
@@ -338,7 +429,7 @@ export function WitholdingTaxScreen() {
             )}
           </Grid>
 
-          {witholdingTaxDetails.length > 0 ? (
+          {onHoldSummary.length > 0 ? (
             <Box>
               <Typography>
                 <span>Jump to page: </span>
@@ -355,31 +446,52 @@ export function WitholdingTaxScreen() {
             ""
           )}
 
-          {/* list Section */}
+          {/* On Hold Section */}
 
           {/* Action Buttons */}
 
-          {witholdingTaxDetails.length > 0 ? (
+          {onHoldSummary.length > 0 ? (
             <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
               <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-                <CustomButton
-                  btnBG={colors.grey[900]}
-                  btnColor={colors.grey[100]}
-                  btnStartIcon={
-                    <img src="../../assets/common/Cross.svg" width={22} />
-                  }
-                  btnTxt={"Remove"}
-                ></CustomButton>
-
-                <CustomButton
-                  btnBG={colors.grey[900]}
-                  btnColor={colors.grey[100]}
-                  btnStartIcon={
-                    <img src="../../assets/common/Tick.svg" width={22} />
-                  }
-                  btnTxt={"Confirm"}
-                ></CustomButton>
-
+                {userRole === "Biz Ops" ? (
+                  <CustomButton
+                    btnBG={colors.grey[900]}
+                    btnColor={colors.grey[100]}
+                    btnStartIcon={
+                      <img src="../../assets/common/Cross.svg" width={22} />
+                    }
+                    btnTxt={"Request Release"}
+                    onClick={cancelHold}
+                  ></CustomButton>
+                ) : (
+                  ""
+                )}
+                {userRole === "Biz Ops Head" ? (
+                  <CustomButton
+                    btnBG={colors.grey[900]}
+                    btnColor={colors.grey[100]}
+                    btnStartIcon={
+                      <img src="../../assets/common/Cross.svg" width={22} />
+                    }
+                    btnTxt={"Cancel"}
+                    onClick={cancelHold}
+                  ></CustomButton>
+                ) : (
+                  ""
+                )}
+                {userRole === "Biz Ops Head" ? (
+                  <CustomButton
+                    btnBG={colors.grey[900]}
+                    btnColor={colors.grey[100]}
+                    btnStartIcon={
+                      <img src="../../assets/common/Tick.svg" width={22} />
+                    }
+                    btnTxt={"Release"}
+                    onClick={startDownload}
+                  ></CustomButton>
+                ) : (
+                  ""
+                )}
                 <CustomButton
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
@@ -390,6 +502,7 @@ export function WitholdingTaxScreen() {
                     <img src="../../assets/common/Arrow-down.svg" height={8} />
                   }
                   btnTxt={"Download"}
+                  onClick={startDownload}
                 ></CustomButton>
               </Stack>
             </Grid>

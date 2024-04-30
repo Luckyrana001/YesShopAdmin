@@ -1,143 +1,221 @@
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 import { tokens } from "../theme";
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
-import { Link } from "react-router-dom";
-import DebugLog from '../utils/DebugLog';
-import NoDataFound from './NoDataFound';
-
+import { Link, useNavigate } from "react-router-dom";
+import DebugLog from "../utils/DebugLog";
+import NoDataFound from "./NoDataFound";
+import { atom, useAtom } from "jotai";
+import Paper from "@mui/material/Paper";
+import * as CONSTANT from "../constants/Constant";
+import { saveToLocalStorageJsonObject } from "../utils/localStorageUtils";
+import { NAV_PAYOUT_DETAIL_DATA } from "../constants/LocalStorageKeyValuePairString";
 function createData(cycle, status, cutoff, payout, details) {
-    return { cycle, status, cutoff, payout, details};
-  }
-  
-  const rows = [
-    createData('Bi Weekly : 1st - 15th ', 'Need Approval', '20 Jan ‘24', '22 Jan ‘24', 'RM 1,000,000.00'),
-    createData('Weekly : 1st - 7th ', 'Scheduled', '20 Jan ‘24', '22 Jan ‘24', 'RM 100,000.00'),
-  ];
-  
-  const columns = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'firstName', headerName: 'First name', width: 130 },
-    { field: 'lastName', headerName: 'Last name', width: 130 },
-    {
-      field: 'age',
-      headerName: 'Age',
-      type: 'number',
-      width: 90,
-    },
-    {
-      field: 'fullName',
-      headerName: 'Full name',
-      description: 'This column has a value getter and is not sortable.',
-      sortable: false,
-      width: 160,
-      valueGetter: (value, row) => `${row.firstName || ''} ${row.lastName || ''}`,
-    },
-  ];
+  return { cycle, status, cutoff, payout, details };
+}
 
+const rows = [
+  createData(
+    "Bi Weekly : 1st - 15th ",
+    "Need Approval",
+    "20 Jan ‘24",
+    "22 Jan ‘24",
+    "RM 1,000,000.00"
+  ),
+  createData(
+    "Weekly : 1st - 7th ",
+    "Scheduled",
+    "20 Jan ‘24",
+    "22 Jan ‘24",
+    "RM 100,000.00"
+  ),
+];
 
+const columns = [
+  { field: "id", headerName: "ID", width: 70 },
+  { field: "firstName", headerName: "First name", width: 130 },
+  { field: "lastName", headerName: "Last name", width: 130 },
+  {
+    field: "age",
+    headerName: "Age",
+    type: "number",
+    width: 90,
+  },
+  {
+    field: "fullName",
+    headerName: "Full name",
+    description: "This column has a value getter and is not sortable.",
+    sortable: false,
+    width: 160,
+    valueGetter: (value, row) => `${row.firstName || ""} ${row.lastName || ""}`,
+  },
+];
 
-const SimpleTable = ({
-    statusBG,
-    statusData,
-    data,
-    to,
-  }) => {
+const SimpleTable = ({ statusBG, statusData, data, to }) => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const navigate = useNavigate();
 
-    const theme = useTheme();
-    const colors = tokens(theme.palette.mode);
+  const [selectedRow, setSelectedRow] = React.useState({});
+  //DebugLog({ selectedRow });
+  //DebugLog("data===="+JSON.stringify(data));
 
-    const [selectedRow, setSelectedRow] = React.useState({});
-    DebugLog({ selectedRow });
-    DebugLog("data===="+data);
-    
+  // Function to handle row selection
+  const handleRowClick = (
+    id,
+    payoutCycle,
+    cutOffDate,
+    payoutStatus,
+    payOutDate
+  ) => {
+    setSelectedRow(id);
 
-    if (!data || data.length === 0) {
-      return (
-        <Grid item xs={12} sm={12} md={12} lg={12} xl={12} borderRadius= {2} >
-        <TableContainer sx={{ borderRadius: "0 0 8px 8px"}}>
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                  <TableHead sx={{ background: "rgba(255,255,255,0.6)", color:"#FF2300 !important", textTransform: "uppercase" }}>
-                    <TableRow sx={{letterSpacing: "1px"  }}>
-                      <TableCell sx={{ paddingLeft: "28px" }} >Cycle</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Cut Off</TableCell>
-                      <TableCell>Pay Out By</TableCell>
-                      <TableCell align="right" sx={{ paddingRight: "28px" }}>Details</TableCell>
-                    </TableRow>
-                  </TableHead>
-     
-       </Table>
-          </TableContainer>
+    const pageNumber = 0;
+    const pageSize = 10;
+    const payoutRowSelected = {
+      payoutCycle: payoutCycle,
+      cutOffDate: cutOffDate,
+      payoutStatus: payoutStatus,
+      payoutDate: payOutDate,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+    };
 
-          <NoDataFound/>
-       </Grid>
-       
-      );
-    }
-  
+    DebugLog("payoutRowSelected  " + JSON.stringify(payoutRowSelected));
+    saveToLocalStorageJsonObject(NAV_PAYOUT_DETAIL_DATA, payoutRowSelected);
+    navigate(CONSTANT.PAYOUT_ARCHIEVE_ROUTE);
+  };
 
+  if (!data || data.length === 0) {
     return (
+      <Grid item xs={12} sm={12} md={12} lg={12} xl={12} borderRadius={2}>
+        <TableContainer sx={{ borderRadius: "0 0 8px 8px" }}>
+          <Table
+            sx={{ minWidth: 650 }}
+            aria-label="simple table"
+            component={Paper}
+          >
+            <TableHead
+              sx={{
+                background: "rgba(255,255,255,0.6)",
+                color: "#FF2300 !important",
+                textTransform: "uppercase",
+              }}
+            >
+              <TableRow sx={{ letterSpacing: "1px" }}>
+                <TableCell sx={{ paddingLeft: "28px" }}>payout Cycle</TableCell>
+                <TableCell>payout Status</TableCell>
+                <TableCell>Cut Off</TableCell>
+                <TableCell>Pay Out By</TableCell>
+                <TableCell align="left" sx={{ paddingRight: "28px" }}>
+                  Details
+                </TableCell>
+              </TableRow>
+            </TableHead>
+          </Table>
+        </TableContainer>
 
-<Grid item xs={12} sm={12} md={12} lg={12} xl={12} borderRadius= {2}>
+        <NoDataFound />
+      </Grid>
+    );
+  }
 
-          <TableContainer sx={{ borderRadius: "0 0 8px 8px"}}>
-                <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                  <TableHead sx={{ background: "rgba(255,255,255,0.6)", color:"#FF2300 !important", textTransform: "uppercase" }}>
-                    <TableRow sx={{letterSpacing: "1px"  }}>
-                      <TableCell sx={{ paddingLeft: "28px" }} >Cycle</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Cut Off</TableCell>
-                      <TableCell>Pay Out By</TableCell>
-                      <TableCell align="right" sx={{ paddingRight: "28px" }}>Details</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody sx={{ background: "rgba(255,255,255,1)"}}>
-                    {data.map(payoutSummaryList => (
-                      <TableRow
-                        key={payoutSummaryList.id}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, textDecoration: 'none !important' }}
-                        component={Link} to="/payoutsArchive"
-                      >
-                        <TableCell component="th" scope="row" sx={{ paddingLeft: "28px", fontSize:14, fontWeight: 600 }}>
-                          {payoutSummaryList.cycle}
-                         
-                        </TableCell>
-                        <TableCell 
-                            sx={{ color:statusBG, fontWeight: 700, fontSize:13 }}
-                        >
-                            <Grid container direction={"row"} alignItems={"center"} spacing={1.5}>
-                                <Grid item>
-                                    <Box width={6} height={6} borderRadius={6} backgroundColor={statusBG}
-                                      sx={{ display: { xs:"none", sm:"flex"} }}
-                                    ></Box>
-                                </Grid>
-                                <Grid item>
-                                {payoutSummaryList.status}
-                                </Grid>
-                            </Grid>
-                            
-                        </TableCell>
-                        <TableCell>{payoutSummaryList.cutOff}</TableCell>
-                        <TableCell>{payoutSummaryList.payoutBy}</TableCell>
-                        <TableCell align="right" sx={{ paddingRight: "28px", fontSize:15, fontWeight: 900 }}>{payoutSummaryList.details}</TableCell>
-             
-              
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-          </TableContainer>
+  return (
+    <Grid item xs={12} sm={12} md={12} lg={12} xl={12} borderRadius={2}>
+      <TableContainer sx={{ borderRadius: "0 0 8px 8px" }}>
+        <Table
+          sx={{ minWidth: 650 }}
+          aria-label="simple table"
+          component={Paper}
+        >
+          <TableHead
+            sx={{
+              background: "rgba(255,255,255,0.6)",
+              color: "#FF2300 !important",
+              textTransform: "uppercase",
+            }}
+          >
+            <TableRow sx={{ letterSpacing: "1px" }}>
+              <TableCell sx={{ paddingLeft: "28px" }}>payout Cycle</TableCell>
+              <TableCell>payout Status</TableCell>
+              <TableCell>Cut Off</TableCell>
+              <TableCell>Pay Out By</TableCell>
+              <TableCell align="left" sx={{ paddingRight: "28px" }}>
+                Details
+              </TableCell>
+            </TableRow>
+          </TableHead>
 
-        </Grid>
-
-);
+          <TableBody sx={{ background: "rgba(255,255,255,1)" }}>
+            {data.map((payoutSummaryList) => (
+              <TableRow
+                key={payoutSummaryList.id}
+                sx={{
+                  "&:last-child td, &:last-child th": { border: 0 },
+                  textDecoration: "none !important",
+                }}
+                //onClick={() => handleRowClick(payoutSummaryList.id)}
+                //component={Link} to="/payoutsArchive"
+                onClick={() => {
+                  handleRowClick(
+                    payoutSummaryList.id,
+                    payoutSummaryList.payoutCycle,
+                    payoutSummaryList.cutOffDate,
+                    payoutSummaryList.payoutStatus,
+                    payoutSummaryList.payOutDate
+                  );
+                  console.log("Cell clicked with ID:", payoutSummaryList.id);
+                }}
+              >
+                <TableCell
+                  component="th"
+                  scope="row"
+                  sx={{ paddingLeft: "28px", fontSize: 14, fontWeight: 600 }}
+                >
+                  {payoutSummaryList.payoutCycle}
+                </TableCell>
+                <TableCell
+                  sx={{ color: statusBG, fontWeight: 700, fontSize: 13 }}
+                >
+                  <Grid
+                    container
+                    direction={"row"}
+                    alignItems={"center"}
+                    spacing={1.5}
+                  >
+                    <Grid item>
+                      <Box
+                        width={6}
+                        height={6}
+                        borderRadius={6}
+                        backgroundColor={statusBG}
+                        sx={{ display: { xs: "none", sm: "flex" } }}
+                      ></Box>
+                    </Grid>
+                    <Grid item>{payoutSummaryList.payoutStatus}</Grid>
+                  </Grid>
+                </TableCell>
+                <TableCell>{payoutSummaryList.cutOffDate}</TableCell>
+                <TableCell>{payoutSummaryList.payOutDate}</TableCell>
+                <TableCell
+                  align="left"
+                  sx={{ paddingRight: "28px", fontSize: 15, fontWeight: 900 }}
+                >
+                  RM {payoutSummaryList.summaryAmount}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Grid>
+  );
 };
 
 export default SimpleTable;

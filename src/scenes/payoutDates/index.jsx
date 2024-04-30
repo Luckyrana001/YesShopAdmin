@@ -1,13 +1,12 @@
 import { tokens } from "../../theme";
 import * as React from "react";
 
-import { Box, Button, IconButton, Typography,useTheme } from "@mui/material";
+import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import GreetingHeader from "../../components/GreetingHeader";
 import SectionHeader from "../../components/SectionHeader";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
-
 
 import ConnectionStatus from "../../utils/ConnectionStatus";
 import { SnackbarProvider, useSnackbar } from "notistack";
@@ -34,6 +33,7 @@ import {
   DONT_HAVE_A_ACCOUNT_SIGNUP,
   ERROR,
   ERROR_WHILE_AUTHENTICATING_USER,
+  ERROR_WHILE_FETCHING_DATA,
   ERROR_WHILE_FETCHING_PAYOUT_DETAILS,
   ERROR_WHILE_RETRIEVING_BASIC_AUTH,
   FETCHING_PAYOUT_DETAILS_PLEASE_WAIT,
@@ -54,8 +54,11 @@ import {
   SESSION_ID,
   USER_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
-import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
-import { ApiType } from "../../services/ApiTags";
+import {
+  generateRandomId,
+  generateRequestId,
+} from "../../utils/RequestIdGenerator";
+import { ApiErrorCode, ApiType } from "../../services/ApiTags";
 import {
   getBasicAuth,
   getPayoutDetails,
@@ -64,14 +67,15 @@ import {
 } from "../../services/ApiService";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 
-
 import * as CONSTANT from "../../constants/Constant";
 import SimpleTable from "../../components/SimpleTable";
-import { onHoldSummaryColumnHeader, payoutDatesColumnHeader, payoutDatesIncentiveColumnHeader } from "../../components/ColumnHeader";
+import {
+  onHoldSummaryColumnHeader,
+  payoutDatesColumnHeader,
+  payoutDatesIncentiveColumnHeader,
+} from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
 import CustomButton from "../../components/CustomButton";
-
-
 
 const PayoutDatesScreen = () => {
   const theme = useTheme();
@@ -97,7 +101,6 @@ const PayoutDatesScreen = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
-
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
   };
@@ -112,8 +115,8 @@ const PayoutDatesScreen = () => {
     setCurrentPage(newPage);
   };
 
-   // increase - decrease list layout height on available list itmes count
-   function getDataGridHeight() {
+  // increase - decrease list layout height on available list itmes count
+  function getDataGridHeight() {
     // Calculate the total height required for the grid
     const headerHeight = 100; // Height of header row
     const rowHeight = 100; // Height of each data row
@@ -125,7 +128,6 @@ const PayoutDatesScreen = () => {
   }
 
   useEffect(() => {
-
     getDataGridHeight();
 
     // get Payout details
@@ -136,25 +138,21 @@ const PayoutDatesScreen = () => {
     showNoInternetSnackBar();
 
     navigate(blockNavigation);
+  }, [isNetworkConnectionAvailable, enqueueSnackbar, totalNoOfRows]);
 
-  }, [isNetworkConnectionAvailable, enqueueSnackbar,totalNoOfRows]);
-
-
-
-  function blockNavigation (location, action)  {
+  function blockNavigation(location, action) {
     // Block navigation if action is "pop", which indicates back/forward button press
-    if (action === 'pop' ) {
+    if (action === "pop") {
       // Optionally, you can show a message to the user before blocking navigation
-       alert('Back button is disabled.');
+      alert("Back button is disabled.");
       return false;
     }
     return true; // Allow navigation for other actions like "push" or "replace"
-  };
+  }
 
-async function getpayoutDatesData() {
-  try {
-    if (isNetworkConnectionAvailable) {
-    
+  async function getpayoutDatesData() {
+    try {
+      if (isNetworkConnectionAvailable) {
         setProgressbarText(FETCHING_PAYOUT_SUMMARY_PLEASE_WAIT);
         setLoading(true); // Hide the progress dialog
 
@@ -173,7 +171,6 @@ async function getpayoutDatesData() {
           getFromLocalStorage(MESSAGE_KEY),
           ApiType.GET_PAYOUT_SUMMARY
         ).then((encryptedContentData) => {
-         
           const payoutDatesRequestData = {
             requestId: generateRequestId(),
             loginId: getFromLocalStorage(LOGIN_ID),
@@ -181,111 +178,133 @@ async function getpayoutDatesData() {
             //contentData: encryptedContentData,
           };
 
-        
           getPayoutDates(payoutDatesRequestData)
             .then((response) => {
+              //const deviceReimbursement = []
+              // const incentive = []
 
+              if (
+                response.data.result.payoutTypeDetails[0].payoutType ===
+                "Incentive"
+              ) {
+                const incentiveArray =
+                  response.data.result.payoutTypeDetails[0].payoutDatesDetails;
+                const incentive = incentiveArray.map((row) => ({
+                  ...row,
+                  id: generateRandomId(),
+                }));
+                setTotalNoOfRows(incentive.length);
+                setPayoutDates(incentive);
+              }
 
-            //const deviceReimbursement = []
-           // const incentive = []
+              if (
+                response.data.result.payoutTypeDetails[1].payoutType ===
+                "Device Reimbursement"
+              ) {
+                const ideviceReimbursementArray =
+                  response.data.result.payoutTypeDetails[1].payoutDatesDetails;
+                const deviceReimbursement = ideviceReimbursementArray.map(
+                  (row) => ({ ...row, id: generateRandomId() })
+                );
+                setDeviceRembersementDates(deviceReimbursement);
+              }
 
-            if(response.data.result.payoutTypeDetails[0].payoutType === 'Incentive')
-            {
-             const incentiveArray = response.data.result.payoutTypeDetails[0].payoutDatesDetails
-            const  incentive = incentiveArray.map(row => ({ ...row, id: generateRandomId() }));
-            setTotalNoOfRows(incentive.length);
-            setPayoutDates(incentive)
-            
-            }
+              // Map through the original data and assign random IDs to rows
+              //const rowsWithIds = response.data.result.payoutTypeDetails.map(row => ({ ...row, id: generateRandomId() }));
 
-            if(response.data.result.payoutTypeDetails[1].payoutType==='Device Reimbursement')
-            {
-              const ideviceReimbursementArray  = response.data.result.payoutTypeDetails[1].payoutDatesDetails
-             const deviceReimbursement = ideviceReimbursementArray.map(row => ({ ...row, id: generateRandomId() }));
-             setDeviceRembersementDates(deviceReimbursement)
-            
-            }
-           
-            
-
-             // Map through the original data and assign random IDs to rows
-             //const rowsWithIds = response.data.result.payoutTypeDetails.map(row => ({ ...row, id: generateRandomId() }));
-
-            
-              
               setLoading(false);
             })
             .catch((error) => {
-              const message =
-                error.response != null ? error.response : error.message;
-              showErrorAlert(
-                error.message,
-                ERROR_WHILE_FETCHING_PAYOUT_DETAILS + JSON.stringify(message)
-              );
+              if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
             });
         });
-      
-    } else {
-      showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_PAYOUT_DETAILS + JSON.stringify(message)
+      );
     }
-  } catch (error) {
-    const message = error.response != null ? error.response : error.message;
-    showErrorAlert(
-      error.message,
-      ERROR_WHILE_FETCHING_PAYOUT_DETAILS + JSON.stringify(message)
-    );
   }
-}
 
-async function getPayoutDetail() {
+  async function getPayoutDetail() {
     try {
       if (isNetworkConnectionAvailable) {
-      
-          setProgressbarText(FETCHING_PAYOUT_DETAILS_PLEASE_WAIT);
-          setLoading(true); // Hide the progress dialog
+        setProgressbarText(FETCHING_PAYOUT_DETAILS_PLEASE_WAIT);
+        setLoading(true); // Hide the progress dialog
 
-          const id = "1";
-          const pageNumber = 1;
-          const pageSize = 10;
+        const id = "1";
+        const pageNumber = 1;
+        const pageSize = 10;
 
-          const payoutDetails = {
-            id: id,
-            pageNumber: pageNumber,
-            pageSize: pageSize,
+        const payoutDetails = {
+          id: id,
+          pageNumber: pageNumber,
+          pageSize: pageSize,
+        };
+
+        initializeEncryption(
+          payoutDetails,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_PAYOUT_DETAILS
+        ).then((encryptedContentData) => {
+          const payoutDetailsRequestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
           };
 
-          initializeEncryption(
-            payoutDetails,
-            getFromLocalStorage(MESSAGE_KEY),
-            ApiType.GET_PAYOUT_DETAILS
-          ).then((encryptedContentData) => {
-            const payoutDetailsRequestData = {
-              requestId: generateRequestId(),
-              loginId: getFromLocalStorage(LOGIN_ID),
-              sessionId: getFromLocalStorage(SESSION_ID),
-              contentData: encryptedContentData,
-            };
+          getPayoutDetails(payoutDetailsRequestData)
+            .then((response) => {
+              DebugLog(
+                "getPayoutDetails response.data=====" +
+                  JSON.stringify(response.data)
+              );
 
-          
-            getPayoutDetails(payoutDetailsRequestData)
-              .then((response) => {
-                DebugLog(
-                  "getPayoutDetails response.data=====" +
-                    JSON.stringify(response.data)
-                );
-
-                setLoading(false);
-              })
-              .catch((error) => {
+              setLoading(false);
+            })
+            .catch((error) => {
+              if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
                 const message =
-                  error.response != null ? error.response : error.message;
-                showErrorAlert(
-                  error.message,
-                  ERROR_WHILE_FETCHING_PAYOUT_DETAILS + JSON.stringify(message)
-                );
-              });
-          });
-        
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
       }
@@ -323,46 +342,45 @@ async function getPayoutDetail() {
     }
   };
   return (
-     /* Main Container */
+    /* Main Container */
     <Box>
-    <SnackbarProvider maxSnack={3}>
-    <ConnectionStatus />
-    <ShowErrorAlertDialog
-      status={getDialogStatus}
-      title={title}
-      content={content}
-    />
-    {isNetworkConnectionAvailable ? (
-      <CustomProgressDialog open={loading} text={getProgressbarText} />
-    ) : (
-      showNoInternetSnackBar()
-    )}
-   
-    <Grid
-      container
-      component="main"
-      direction={"column"}
-      sx={{
-        // height: "100vh",
-        m: "0 2.5%" /* Approx 30px */,
-        borderRadius: "18px",
-      }}
-    >
-      {/* Greetings Header */}
-      <Grid container>
-        <Grid item>
-          <GreetingHeader name={"Payout Dates"}></GreetingHeader>
-        </Grid>
-      </Grid>
-      {/* Greetings Header */}
+      <SnackbarProvider maxSnack={3}>
+        <ConnectionStatus />
+        <ShowErrorAlertDialog
+          status={getDialogStatus}
+          title={title}
+          content={content}
+        />
+        {isNetworkConnectionAvailable ? (
+          <CustomProgressDialog open={loading} text={getProgressbarText} />
+        ) : (
+          showNoInternetSnackBar()
+        )}
 
+        <Grid
+          container
+          component="main"
+          direction={"column"}
+          sx={{
+            // height: "100vh",
+            m: "0 2.5%" /* Approx 30px */,
+            borderRadius: "18px",
+          }}
+        >
+          {/* Greetings Header */}
+          <Grid container>
+            <Grid item>
+              <GreetingHeader name={"Payout Dates"}></GreetingHeader>
+            </Grid>
+          </Grid>
+          {/* Greetings Header */}
 
-      {/* Action Buttons */}
+          {/* Action Buttons */}
 
-      {payoutDates.length > 0 ? (
-          <Grid item mt={0}  mr={10}   justifyContent={"flex-start"} pb={0}>
-            <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-              {/* <CustomButton
+          {payoutDates.length > 0 ? (
+            <Grid item mt={0} mr={10} justifyContent={"flex-start"} pb={0}>
+              <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
+                {/* <CustomButton
                 btnBG={colors.grey[900]}
                 btnColor={colors.grey[100]}
                 btnStartIcon={
@@ -371,56 +389,52 @@ async function getPayoutDetail() {
                 btnTxt={"Cancel"}
               ></CustomButton>*/}
 
-              <CustomButton
-                btnBG={colors.grey[900]}
-                btnColor={colors.grey[100]}
-                btnStartIcon={
-                  <img src="../../assets/common/Tick.svg" width={22} />
-                }
-                btnTxt={"ADD CYCLE"}
-              ></CustomButton> 
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                  btnStartIcon={
+                    <img src="../../assets/common/Tick.svg" width={22} />
+                  }
+                  btnTxt={"ADD CYCLE"}
+                ></CustomButton>
 
-              <CustomButton
-                btnBG={colors.grey[900]}
-                btnColor={colors.grey[100]}
-                btnStartIcon={
-                  <img src="../../assets/common/Download.svg" width={22} />
-                }
-                btnEndIcon={
-                  <img src="../../assets/common/Arrow-down.svg" height={8} />
-                }
-                btnTxt={"SAVE"}
-              ></CustomButton>
-            </Stack>
-          </Grid>
-  ) : (
-    ""
-  )}
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                  btnStartIcon={
+                    <img src="../../assets/common/Download.svg" width={22} />
+                  }
+                  btnEndIcon={
+                    <img src="../../assets/common/Arrow-down.svg" height={8} />
+                  }
+                  btnTxt={"SAVE"}
+                ></CustomButton>
+              </Stack>
+            </Grid>
+          ) : (
+            ""
+          )}
           {/* Action Buttons */}
 
-      {/* Validations Section */}
-      <Grid
-        container
-        mt={3}
-        border={"1px solid" + colors.grey[600]}
-        borderRadius={2}
-        xs={12}
-        sm={12}
-        md={12}
-        lg={12}
-        xl={12}
-        pb={2}
-      >
-         <SectionHeader
+          {/* Validations Section */}
+          <Grid
+            container
+            mt={3}
+            border={"1px solid" + colors.grey[600]}
+            borderRadius={2}
+            xs={12}
+            sm={12}
+            md={12}
+            lg={12}
+            xl={12}
+            pb={2}
+          >
+            <SectionHeader
               sectionIcon={"../../assets/common/onhold.svg"}
               sectionHeading={"Payout Dates"}
             ></SectionHeader>
 
-
-
-            
-
-{payoutDates.length > 0 ? (
+            {payoutDates.length > 0 ? (
               <Box
                 borderRadius={3}
                 flex={1}
@@ -477,23 +491,20 @@ async function getPayoutDetail() {
                   pagination
                   onPageChange={handlePageChange}
                 />
-                
               </Box>
             ) : (
               NoDataFound()
             )}
-            
 
-        {/* <SimpleTable
+            {/* <SimpleTable
           statusData={"In Validation"}
           statusBG={colors.primary[300]}
           data={payoutDates}
         ></SimpleTable> */}
+          </Grid>
+          {/* Validations Section */}
 
-      </Grid>
-      {/* Validations Section */}
-
-      {payoutDates.length > 0 ? (
+          {payoutDates.length > 0 ? (
             <Box>
               <Typography>
                 <span>Jump to page: </span>
@@ -509,15 +520,11 @@ async function getPayoutDetail() {
           ) : (
             ""
           )}
-    </Grid>
-
-      
-       
-    </SnackbarProvider>
+        </Grid>
+      </SnackbarProvider>
     </Box>
-     /* Main Container */
+    /* Main Container */
   );
 };
 
 export default PayoutDatesScreen;
-

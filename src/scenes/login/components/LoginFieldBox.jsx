@@ -5,6 +5,7 @@ import { atom, useAtom } from "jotai";
 import * as React from "react";
 import {
   isAuthPageAtom,
+  sessionIdStatus,
   showErrorAlertDialog,
 } from "../../../config/AppConfig";
 import * as CONSTANT from "../../../constants/Constant";
@@ -25,6 +26,7 @@ import {
   saveToLocalStorage,
   getFromLocalStorage,
   deleteAllKeyFromLocalStorage,
+  saveToLocalStorageJsonObject,
 } from "../../../utils/localStorageUtils";
 import CustomProgressDialog from "../../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../../components/ErrorAlertDialog";
@@ -48,9 +50,12 @@ import DebugLog from "../../../utils/DebugLog";
 import {
   BASIC_AUTH_TOKKEN,
   LOGIN_ID,
+  LOGIN_RESPONSE,
   MESSAGE_KEY,
   SESSION_ID,
   USER_ID,
+  USER_NAME,
+  USER_ROLE,
 } from "../../../constants/LocalStorageKeyValuePairString";
 import { generateRequestId } from "../../../utils/RequestIdGenerator";
 import { ApiType } from "../../../services/ApiTags";
@@ -59,6 +64,7 @@ function LoginFieldBox() {
   const navigate = useNavigate();
   const [, setAuthStatus] = useAtom(isAuthPageAtom);
   const [getDialogStatus, setErrorDialog] = useAtom(showErrorAlertDialog);
+  const [sessionIdState, setSessionIdState] = useAtom(sessionIdStatus);
   const isNetworkConnectionAvailable = UseOnlineStatus();
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -79,9 +85,8 @@ function LoginFieldBox() {
     showNoInternetSnackBar();
   }, [isNetworkConnectionAvailable, enqueueSnackbar]);
 
-  
-
   const resetAllConfigration = () => {
+    saveToLocalStorage(SESSION_ID, "");
     setAuthStatus(true);
     setError("");
     setErrorDialog(false);
@@ -131,18 +136,10 @@ function LoginFieldBox() {
           setProgressbarText(AUTHENTICATING_PLEASE_WAIT);
           setLoading(true); // Hide the progress dialog
 
-          const imeiNumber = "23423423423";
-          const isAutoLogin = "N";
-          //const loginId = 'bizops';
-          //const password = 'ytlc@xm1234';
-
-
           const loginId = email;
           const password = pswd;
 
           const signInData = {
-            //imeiNumber: imeiNumber,
-            //isAutoLogin: isAutoLogin,
             userName: loginId,
             password: password,
           };
@@ -156,53 +153,52 @@ function LoginFieldBox() {
               DebugLog("Content data Login Data=====" + encryptedLoginData);
               saveToLocalStorage(LOGIN_ID, signInData.userName);
               const signInReqestData = {
-                ///requestId: generateRequestId(),
-                requestId: "1675411430643",
+                requestId: generateRequestId(),
                 loginId: signInData.loginId,
                 basicAuthToken: getFromLocalStorage(BASIC_AUTH_TOKKEN),
                 contentData: encryptedLoginData,
-               //basicAuthToken:"DFd11DSyHyYTQ+D2jANn+1GnmiEu8Or5ukAWmLNp5R7cMdVzHBVpxe8kJA6yVx/4QdbLmL3tOnHQny54RCFORKC7QrwpwjOoCi8c8q7Vw3dlvkSVoxdQ3LoBhxzd5WwSqsYUTb4gtVLYS2qAsUKIMJuwmCBYQB2nqdz72h6cTfl6M8RQhu7wHjAcPOxoYxLK4X+ixQ+DkqSthk8lHnUxPw==",
-               //contentData: "Kdkg1mAiYg5qo1BebxYth2Gdu6ooHepG7fUxcSiL/na9LPi20S/dDyuas87yygSxHGacfayBKnkC6nrrFl0="
               };
 
-             
               getUserLoginDetails(signInReqestData)
                 .then((response) => {
-
-                  DebugLog("response.data====="+response.data)
-                  DebugLog("response.data.result====="+response.data.result)
-                  DebugLog("response.data.result.sessionId===="+response.data.result.sessionId)
                   const sessionId = response.data.result.sessionId;
-                  DebugLog("sessionId====="+sessionId)
+                  DebugLog("sessionId=====" + sessionId);
 
                   saveToLocalStorage(SESSION_ID, sessionId);
-                  //saveToLocalStorage(USER_ID, response.data.result.userId);
+                  saveToLocalStorageJsonObject(
+                    LOGIN_RESPONSE,
+                    response.data.result.userAccessDetails.menuList
+                  );
+                  setSessionIdState(sessionId);
+
+                  saveToLocalStorage(USER_ID, response.data.result.userId);
+                  saveToLocalStorage(USER_NAME, response.data.result.name);
+                  saveToLocalStorage(USER_ROLE, response.data.result.role);
 
                   // open dashbaord on the basis of response type and login path
-                   goToDashboard();
+                  goToDashboard();
 
                   setLoading(false);
-
-                 
                 })
                 .catch((error) => {
-                  if(error.data.responseCode!=-1){
-                  const message =
-                    error.response != null ? error.response : error.message;
-                  showErrorAlert(
-                    error.message,
-                    ERROR_WHILE_AUTHENTICATING_USER + JSON.stringify(message)
-                
-                  );
-                }else{
-                  DebugLog("  error.data   "+JSON.stringify(error.data))
-                  const message =
-                  error.data != null ? error.data.displayErrorMessage : error.message;
-                showErrorAlert(
-                  ERROR,
-                  ERROR_WHILE_AUTHENTICATING_USER + JSON.stringify(message)
-                );
-                }
+                  if (error.data.responseCode != -1) {
+                    const message =
+                      error.response != null ? error.response : error.message;
+                    showErrorAlert(
+                      error.message,
+                      ERROR_WHILE_AUTHENTICATING_USER + JSON.stringify(message)
+                    );
+                  } else {
+                    DebugLog("  error.data   " + JSON.stringify(error.data));
+                    const message =
+                      error.data != null
+                        ? error.data.displayErrorMessage
+                        : error.message;
+                    showErrorAlert(
+                      ERROR,
+                      ERROR_WHILE_AUTHENTICATING_USER + JSON.stringify(message)
+                    );
+                  }
                 });
             })
             .catch((error) => {
@@ -227,26 +223,6 @@ function LoginFieldBox() {
       );
     }
   }
-  // const getUserInfo = () => {
-  //   if (isNetworkConnectionAvailable) {
-  //     setProgressbarText("Loading User Info...");
-  //     setLoading(true);
-  //     getUsers()
-  //       .then((response) => {
-  //         setUsers(response.data.users);
-
-  //         DebugLog("response.data=====" + response.data.users[0].firstName);
-  //         // DebugLog("getUser[0]========"+JSON.stringify(getUser));
-
-  //         setLoading(false); // Hide the progress dialog
-  //       })
-  //       .catch((error) => {
-  //         showErrorAlert(ERROR,"Error in fetching Users: " + error)
-  //       });
-  //   } else {
-  //     showErrorAlert(ALERT,NO_INTERNET_CONNECTION_FOUND)
-  //   }
-  // };
   const handleFormSubmit = (values) => {
     if (isNetworkConnectionAvailable) {
       setEmail(values.emailValue);
@@ -402,7 +378,7 @@ const checkoutSchema = yup.object().shape({
 const initialValues = {
   //   user: "",
   //   lastName: "",
-  emailValue: "bizops",
+  emailValue: "bizops_head",
   passwordValue: "ytlc@xm1234",
   //   address1: "",
   //   address2: "",

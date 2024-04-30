@@ -1,7 +1,9 @@
 import DebugLog from "../utils/DebugLog";
 
- export async function initializeEncryption(signInData,keyBase64,apiTag) {
-  DebugLog(apiTag+"----Plain Request data---   "+JSON.stringify(signInData));
+export async function initializeEncryption(signInData, keyBase64, apiTag) {
+  DebugLog(
+    apiTag + "----Plain Request data---   " + JSON.stringify(signInData)
+  );
 
   // this code use AES ECB mode
   // return await  encryptWithAesEcb(keyBase64, JSON.stringify(signInData))
@@ -12,95 +14,97 @@ import DebugLog from "../utils/DebugLog";
   //         .catch((error) => {
   //           console.error(error);
   //         });
-   
+
   //  }
 
-// below code is for AES-GCM Encryption , 
- return await  encryptData(keyBase64, JSON.stringify(signInData), process.env.REACT_APP_ENCRYPTION_IV)
-      .then((encryptedData) => {
-        console.log("encrypted  data-------   "+encryptedData);
-        return encryptedData
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
+  // below code is for AES-GCM Encryption ,
+  return await encryptData(
+    keyBase64,
+    JSON.stringify(signInData),
+    process.env.REACT_APP_ENCRYPTION_IV
+  )
+    .then((encryptedData) => {
+      console.log("encrypted  data-------   " + encryptedData);
+      return encryptedData;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
 
- async function encryptWithAesEcb(keyBase64, data ){
- 
+async function encryptWithAesEcb(keyBase64, data) {
   const CryptoJS = require("crypto-js");
   const encrypted = CryptoJS.AES.encrypt(data, keyBase64).toString();
-    return encrypted;
- // return btoa(String.fromCharCode(...encryptedBytes));
- }
+  return encrypted;
+  // return btoa(String.fromCharCode(...encryptedBytes));
+}
 
-  
+async function encryptData(keyBase64, data, ivBase64) {
+  const algorithm = { name: "AES-GCM", length: 128 };
 
-  async function encryptData(keyBase64, data, ivBase64) {
-    const algorithm = { name: "AES-GCM", length: 128 };
-  
-    const keyBuffer = convertStringIntoBase64ToUint8Array(keyBase64);
-    // Import key
-    const key = await window.crypto.subtle.importKey(
-        "raw",
-        keyBuffer,
-       // { name: "AES-GCM" },
-       algorithm,
-        false,
-        ["encrypt"]
-    );
+  const keyBuffer = convertStringIntoBase64ToUint8Array(keyBase64);
+  // Import key
+  const key = await window.crypto.subtle.importKey(
+    "raw",
+    keyBuffer,
+    // { name: "AES-GCM" },
+    algorithm,
+    false,
+    ["encrypt"]
+  );
 
-    const iv = convertStringIntoBase64ToUint8Array(ivBase64)
+  const iv = convertStringIntoBase64ToUint8Array(ivBase64);
 
-    // Convert data to ArrayBuffer
-    const dataBuffer = new TextEncoder().encode(data);
+  // Convert data to ArrayBuffer
+  const dataBuffer = new TextEncoder().encode(data);
 
-    // Encrypt data
-    const encryptedData = await window.crypto.subtle.encrypt(
-        { name: "AES-GCM", iv },
-        key,
-        dataBuffer
-    );
+  // Encrypt data
+  const encryptedData = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    dataBuffer
+  );
 
-    // Encode the encrypted data to Base64
-    const encryptedBytes = new Uint8Array(encryptedData);
-    return btoa(String.fromCharCode(...encryptedBytes));
-  }
+  // Encode the encrypted data to Base64
+  const encryptedBytes = new Uint8Array(encryptedData);
+  return btoa(String.fromCharCode(...encryptedBytes));
+}
 
-  function convertStringIntoBase64ToUint8Array(base64String) {
-    const binaryString = atob(base64String);
+function convertStringIntoBase64ToUint8Array(base64String) {
+  const binaryString = atob(base64String);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
   return bytes;
-  }
+}
 
-  // Function to decrypt data using AES-GCM
-  async function decryptData(encryptedData, keyRaw) {
-    
-    const keyArrayBuffer = convertStringIntoBase64ToUint8Array(keyRaw);
+// Function to decrypt data using AES-GCM
+async function decryptData(encryptedData, keyRaw) {
+  const keyArrayBuffer = convertStringIntoBase64ToUint8Array(keyRaw);
 
-    // Import key
-    const key = await window.crypto.subtle.importKey(
-      "raw",
-      keyArrayBuffer,
-      { name: "AES-GCM" },
-      //algorithm,
-      false,
-      ["decrypt"]
-    );
+  // Import key
+  const key = await window.crypto.subtle.importKey(
+    "raw",
+    keyArrayBuffer,
+    { name: "AES-GCM" },
+    //algorithm,
+    false,
+    ["decrypt"]
+  );
 
-    const iV = convertStringIntoBase64ToUint8Array(process.env.REACT_APP_ENCRYPTION_IV);
+  const iV = convertStringIntoBase64ToUint8Array(
+    process.env.REACT_APP_ENCRYPTION_IV
+  );
 
-    const decryptedData = await window.crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: iV,
-      },
-      key,
-      encryptedData.ciphertext
-    );
+  const decryptedData = await window.crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: iV,
+    },
+    key,
+    encryptedData.ciphertext
+  );
 
-    return new TextDecoder().decode(decryptedData);
-  }
+  return new TextDecoder().decode(decryptedData);
+}

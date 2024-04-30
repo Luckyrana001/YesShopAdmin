@@ -1,6 +1,6 @@
-import React from 'react';
-import { useSnackbar } from 'notistack';
-import { Button } from '@mui/material';
+import React from "react";
+import { useSnackbar } from "notistack";
+import { Button } from "@mui/material";
 
 const SnackbarComponent = ({ message, variant }) => {
   const { enqueueSnackbar } = useSnackbar();

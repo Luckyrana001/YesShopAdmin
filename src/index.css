@@ -45,3 +45,14 @@ body,
   font-weight: bold;
   font-size: small;
 }
+
+.bold-text-color-with-grey-color {
+  color: rgb(112, 106, 106); /* Change color as needed */
+  font-weight: bold;
+  font-size: small;
+}
+.bold-header-style {
+  color: rgb(112, 106, 106);
+  font-weight: bold;
+  font-size: small;
+}

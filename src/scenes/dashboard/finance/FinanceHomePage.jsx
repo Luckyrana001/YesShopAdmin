@@ -14,6 +14,7 @@ import { SnackbarProvider, useSnackbar } from "notistack";
 import UseOnlineStatus from "../../../utils/UseOnlineStatus";
 import {
   getFromLocalStorage,
+  getFromLocalStorageJsonObject,
 } from "../../../utils/localStorageUtils";
 import CustomProgressDialog from "../../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../../components/ErrorAlertDialog";
@@ -25,6 +26,7 @@ import {
 import {
   ALERT,
   ERROR_FOUND_DURING_API_CALL,
+  ERROR_WHILE_FETCHING_DATA,
   FETCHING_PAYOUT_SUMMARY_PLEASE_WAIT,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
@@ -36,11 +38,17 @@ import DebugLog from "../../../utils/DebugLog";
 import {
   BASIC_AUTH_TOKKEN,
   LOGIN_ID,
+  LOGIN_RESPONSE,
+  MESSAGE_KEY,
   SESSION_ID,
   USER_ID,
+  USER_NAME,
 } from "../../../constants/LocalStorageKeyValuePairString";
-import { generateRequestId } from "../../../utils/RequestIdGenerator";
-import { ApiType } from "../../../services/ApiTags";
+import {
+  generateRandomId,
+  generateRequestId,
+} from "../../../utils/RequestIdGenerator";
+import { ApiErrorCode, ApiType } from "../../../services/ApiTags";
 import {
   getOnHoldSummary,
   getPayoutSummary,
@@ -66,22 +74,32 @@ const FinanceHomePage = () => {
 
   const [payoutSummary, setPayoutSummary] = useState([]);
   const [onHoldData, setOnHoldData] = useState([]);
+  const [userName, setUserName] = useState([]);
+
+  function checkUserAuthExistOrNot() {
+    if (getFromLocalStorage(SESSION_ID) === "") {
+      navigate("/");
+      return;
+    }
+  }
 
   useEffect(() => {
+    setUserName(getFromLocalStorage(USER_NAME));
+
+    checkUserAuthExistOrNot();
+
     // get Payout Summary
     getPayoutSummaryData();
 
-     // get on hold Summary
+    // get on hold Summary
     getOnHoldData();
 
-     // show no internet available message
+    // show no internet available message
     showNoInternetSnackBar();
 
     navigate(blockNavigation);
   }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate]);
 
-
-  
   function showErrorAlert(title, content) {
     try {
       setError();
@@ -112,27 +130,64 @@ const FinanceHomePage = () => {
         setProgressbarText(FETCHING_PAYOUT_SUMMARY_PLEASE_WAIT);
         setLoading(true); // Hide the progress dialog
 
-        const payoutSummaryRequestData = {
-          requestId: generateRequestId(),
-          loginId: getFromLocalStorage(LOGIN_ID),
-          sessionId: getFromLocalStorage(SESSION_ID),
-          //basicAuthToken: getFromLocalStorage(BASIC_AUTH_TOKKEN)
-          //contentData: encryptedContentData,
+        // const id = "1";
+        const pageNumber = 0;
+        const pageSize = 100;
+
+        const payoutSummaryContentData = {
+          // id: id,
+          pageNumber: pageNumber,
+          pageSize: pageSize,
         };
 
-        getPayoutSummary(payoutSummaryRequestData)
-          .then((response) => {
-            setPayoutSummary(response.data.result.payoutSummaryList);
-            setLoading(false);
-          })
-          .catch((error) => {
-            const message =
-              error.response != null ? error.response : error.message;
-            showErrorAlert(
-              error.message,
-              ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
-            );
-          });
+        initializeEncryption(
+          payoutSummaryContentData,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_PAYOUT_SUMMARY
+        ).then((encryptedContentData) => {
+          const payoutSummaryRequestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          getPayoutSummary(payoutSummaryRequestData)
+            .then((response) => {
+              // DebugLog(
+              //   "getPayoutSummary response.data=====" +
+              //     JSON.stringify(response.data)
+              // );
+
+              const rowsWithIds = response.data.result.content.map((row) => ({
+                ...row,
+                id: generateRandomId(),
+              }));
+
+              setPayoutSummary(rowsWithIds);
+              setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.data != null
+                    ? error.data.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
       }
@@ -140,7 +195,7 @@ const FinanceHomePage = () => {
       const message = error.response != null ? error.response : error.message;
       showErrorAlert(
         error.message,
-        ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
       );
     }
   }
@@ -148,8 +203,8 @@ const FinanceHomePage = () => {
   function getOnHoldData() {
     try {
       if (isNetworkConnectionAvailable) {
-        setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); // Hide the progress dialog
+        //setProgressbarText(LOADING_PLEASE_WAIT);
+        //setLoading(true); // Hide the progress dialog
 
         const requestData = {
           requestId: generateRequestId(),
@@ -161,15 +216,25 @@ const FinanceHomePage = () => {
         getOnHoldSummary(requestData)
           .then((response) => {
             setOnHoldData(response.data.result.onHoldSummaryList);
-            setLoading(false);
+            //setLoading(false);
           })
           .catch((error) => {
-            const message =
-              error.response != null ? error.response : error.message;
-            showErrorAlert(
-              error.message,
-              ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
-            );
+            if (!error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+              const message =
+                error.response != null ? error.displayErrorMessage : "Unknown";
+
+              if (message)
+                showErrorAlert(
+                  error.message,
+                  ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                );
+            } else {
+              try {
+                navigate("/");
+              } catch (error) {
+                DebugLog("error " + error);
+              }
+            }
           });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
@@ -224,39 +289,39 @@ const FinanceHomePage = () => {
             <Grid item>
               <GreetingHeader
                 greeting={"Welcome Back"}
-                name={"Sung Pik Yeng (Kellie) 👋🏻"}
+                name={userName + " 👋🏻"}
               ></GreetingHeader>
             </Grid>
           </Grid>
           {/* Greetings Header */}
 
           {/* Highlights Section */}
-          <Box sx={{ whiteSpace:"pre" }}>
-          <Grid container spacing={3}>
-            <HighlightBox
-              highlightName={"To Approve"}
-              highlightCount={"100"}
-              highlightBG={colors.primary[100]}
-              highlightColor={colors.greenAccent[100]}
-              highlightIcon={"../../assets/common/Attention.svg"}
-            ></HighlightBox>
+          <Box sx={{ whiteSpace: "pre" }}>
+            <Grid container spacing={3}>
+              <HighlightBox
+                highlightName={"To Approve"}
+                highlightCount={"100"}
+                highlightBG={colors.primary[100]}
+                highlightColor={colors.greenAccent[100]}
+                highlightIcon={"../../assets/common/Attention.svg"}
+              ></HighlightBox>
 
-            <HighlightBox
-              highlightName={"Scheduled"}
-              highlightCount={"10"}
-              highlightBG={colors.primary[200]}
-              highlightColor={colors.greenAccent[100]}
-              highlightIcon={"../../assets/common/Scheduled.svg"}
-            ></HighlightBox>
+              <HighlightBox
+                highlightName={"Scheduled"}
+                highlightCount={"10"}
+                highlightBG={colors.primary[200]}
+                highlightColor={colors.greenAccent[100]}
+                highlightIcon={"../../assets/common/Scheduled.svg"}
+              ></HighlightBox>
 
-            <HighlightBox
-              highlightName={"Validations"}
-              highlightCount={"12"}
-              highlightBG={colors.primary[300]}
-              highlightColor={colors.greenAccent[100]}
-              highlightIcon={"../../assets/common/Validations.svg"}
-            ></HighlightBox>
-          </Grid>
+              <HighlightBox
+                highlightName={"Validations"}
+                highlightCount={"12"}
+                highlightBG={colors.primary[300]}
+                highlightColor={colors.greenAccent[100]}
+                highlightIcon={"../../assets/common/Validations.svg"}
+              ></HighlightBox>
+            </Grid>
           </Box>
           {/* Highlights Section */}
 

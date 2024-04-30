@@ -3,19 +3,26 @@ import React from "react";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import { Box, useTheme } from "@mui/material";
 
-const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightColor, highlightIcon }) => {
+const HighlightBox = ({
+  highlightName,
+  highlightCount,
+  highlightBG,
+  highlightColor,
+  highlightIcon,
+}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
   return (
-    <Grid item 
-        // height={"17.5vh"}
-        xs={6}
-        sm={4}
-        md={4} 
-        lg={4}
-        xl={4}
-        >
+    <Grid
+      item
+      // height={"17.5vh"}
+      xs={6}
+      sm={4}
+      md={4}
+      lg={4}
+      xl={4}
+    >
       <Box
         sx={{
           background: colors.grey[900],
@@ -65,14 +72,13 @@ const HighlightBox = ({ highlightName, highlightCount, highlightBG, highlightCol
               }}
               backgroundColor={highlightBG}
               color={highlightColor}
-            //   mx={"auto"}
+              //   mx={"auto"}
             >
-            <Box>
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <img src={highlightIcon} width={24} />
+              <Box>
+                <Box display="flex" justifyContent="center" alignItems="center">
+                  <img src={highlightIcon} width={24} />
+                </Box>
               </Box>
-            </Box>
-              
             </Box>
           </Grid>
         </Grid>

@@ -10,12 +10,18 @@ const ConnectionStatus = () => {
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      enqueueSnackbar("You are online", {  autoHideDuration: 3000,variant: "success" });
+      enqueueSnackbar("You are online", {
+        autoHideDuration: 3000,
+        variant: "success",
+      });
     };
 
     const handleOffline = () => {
       setIsOnline(false);
-      enqueueSnackbar("You are offline", { autoHideDuration: 3000, variant: "error" });
+      enqueueSnackbar("You are offline", {
+        autoHideDuration: 3000,
+        variant: "error",
+      });
     };
 
     window.addEventListener("online", handleOnline);
@@ -31,7 +37,9 @@ const ConnectionStatus = () => {
     <div>
       {!isOnline ? (
         <div className={`connection-status ${isOnline ? "online" : "offline"}`}>
-         <p className="connection-paragraph">{isOnline ? "ONLINE" : "No Internet Connection"}</p> 
+          <p className="connection-paragraph">
+            {isOnline ? "ONLINE" : "No Internet Connection"}
+          </p>
         </div>
       ) : (
         <div></div>

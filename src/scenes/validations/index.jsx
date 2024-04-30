@@ -9,7 +9,6 @@ import * as React from "react";
 const ValidationScreen = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  
 
   return (
     /* Main Container */
@@ -52,15 +51,11 @@ const ValidationScreen = () => {
           statusData={"In Validation"}
           statusBG={colors.primary[300]}
         ></SimpleTable>
-
       </Grid>
       {/* Validations Section */}
-
-
     </Grid>
     /* Main Container */
   );
 };
 
 export default ValidationScreen;
-
