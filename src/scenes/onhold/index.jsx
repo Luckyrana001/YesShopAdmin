@@ -1,7 +1,5 @@
 import { Typography } from "@mui/material";
-
-import { initializeEncryption } from "../../services/AesGcmEncryption";
-import * as CONSTANT from "../../constants/Constant";
+import Avatar from '@mui/material/Avatar';
 
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
@@ -17,10 +15,7 @@ import { useEffect, useState } from "react";
 import ConnectionStatus from "../../utils/ConnectionStatus";
 import { SnackbarProvider, useSnackbar } from "notistack";
 import UseOnlineStatus from "../../utils/UseOnlineStatus";
-import {
-  getFromLocalStorage,
-  saveToLocalStorageJsonObject,
-} from "../../utils/localStorageUtils";
+import { getFromLocalStorage } from "../../utils/localStorageUtils";
 import CustomProgressDialog from "../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../components/ErrorAlertDialog";
 import { useAtom } from "jotai";
@@ -32,7 +27,6 @@ import {
 import {
   ALERT,
   ERROR_FOUND_DURING_API_CALL,
-  ERROR_WHILE_FETCHING_DATA,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
   YOU_ARE_OFFLINE,
@@ -41,29 +35,18 @@ import {
 import DebugLog from "../../utils/DebugLog";
 import {
   LOGIN_ID,
-  MESSAGE_KEY,
-  NAV_ONHOLD_DETAILS,
   SESSION_ID,
-  USER_ROLE,
 } from "../../constants/LocalStorageKeyValuePairString";
-import {
-  generateRandomId,
-  generateRequestId,
-} from "../../utils/RequestIdGenerator";
-import { getOnHoldCompany, getOnHoldSummary } from "../../services/ApiService";
+import { generateRequestId } from "../../utils/RequestIdGenerator";
+import { getOnHoldSummary } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
-import {
-  onHoldCompanyColumnHeader,
-  onHoldSummaryColumnHeader,
-} from "../../components/ColumnHeader";
+import { onHoldSummaryColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
-import { ApiErrorCode, ApiType } from "../../services/ApiTags";
 
 export function OnHoldSummary() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
-  const [userRole, setUserRole] = useState([]);
 
   const isNetworkConnectionAvailable = UseOnlineStatus();
 
@@ -80,10 +63,10 @@ export function OnHoldSummary() {
   const [onHoldData, setOnHoldData] = useState([]);
   const [gridHeight, setGridHeight] = useState(108); // Default height
   const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
-  const [pageSize, setPageSize] = useState(100);
+  const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
-  const [selectedRows, setSelectedRows] = React.useState([]);
+
 
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
@@ -94,27 +77,16 @@ export function OnHoldSummary() {
       String(value).toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
 
-  function getUserRole() {
-    setUserRole(getFromLocalStorage(USER_ROLE));
-  }
-
-  const handleSelectionChange = (newSelection) => {
-    setSelectedRows(newSelection);
-  };
-
-  const resetSelection = () => {
-    setSelectedRows([]);
-  };
-
-  // increase - decrease list layout height on available list itmes count
-  function getDataGridHeight() {
+   // increase - decrease list layout height on available list itmes count
+   function getDataGridHeight() {
     // Calculate the total height required for the grid
-    const headerHeight = 60; // Height of header row
-    const rowHeight = 60; // Height of each data row
+    const headerHeight = 100; // Height of header row
+    const rowHeight = 100; // Height of each data row
     const rowCount = totalNoOfRows; // Total number of data rows
     const totalHeight = headerHeight + rowCount * rowHeight;
 
@@ -122,157 +94,45 @@ export function OnHoldSummary() {
     setGridHeight(totalHeight);
   }
 
-  function checkUserAuthExistOrNot() {
-    if (getFromLocalStorage(SESSION_ID) === "") {
-      navigate("/");
-      return;
-    }
-  }
-
   useEffect(() => {
-    getUserRole();
-    checkUserAuthExistOrNot();
 
     getDataGridHeight();
 
-    requestOnHoldCompanyData();
+    requestOnHoldSummaryData();
 
     showNoInternetSnackBar();
 
     navigate(blockNavigation);
   }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
 
-  const handleRowClick = (params) => {
-    //{"companyCode":"A0002","pageNumber":0,"endDate":"2023-07-31","pageSize":100,"startDate":"2023-07-01"}
-
-    const pageNumber = 0;
-    const pageSize = 100;
-    const onHoldRowSelected = {
-      companyCode: params.row.companyCode,
-      startDate: params.row.startDate,
-      endDate: params.row.endDate,
-      pageNumber: pageNumber,
-      pageSize: pageSize,
-      companyName: params.row.companyName,
-    };
-
-    DebugLog("onHoldRowSelected  " + JSON.stringify(onHoldRowSelected));
-    saveToLocalStorageJsonObject(NAV_ONHOLD_DETAILS, onHoldRowSelected);
-    navigate(CONSTANT.ON_HOLD_DETAILS_ROUTE);
-  };
-
-  function requestOnHoldCompanyData() {
-    try {
-      if (isNetworkConnectionAvailable) {
-        setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); // Hide the progress dialog
-
-        const requestObject = {
-          pageNumber: 0,
-          pageSize: 100,
-        };
-
-        initializeEncryption(
-          requestObject,
-          getFromLocalStorage(MESSAGE_KEY),
-          ApiType.ON_HOLD_COMPANY_DETAILS
-        ).then((encryptedContentData) => {
-          const onholdCompanyRequestData = {
-            requestId: generateRequestId(),
-            loginId: getFromLocalStorage(LOGIN_ID),
-            sessionId: getFromLocalStorage(SESSION_ID),
-            contentData: encryptedContentData,
-          };
-
-          getOnHoldCompany(onholdCompanyRequestData)
-            .then((response) => {
-              const contentData = response.data.result.content.map((row) => ({
-                ...row,
-                id: generateRandomId(),
-              }));
-              setOnHoldSummary(contentData);
-              setTotalNoOfRows(response.data.result.content.length);
-              setLoading(false);
-            })
-            .catch((error) => {
-              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
-                try {
-                  navigate("/");
-                } catch (error) {
-                  DebugLog("error " + error);
-                }
-              } else if (
-                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
-              ) {
-                try {
-                  navigate(CONSTANT.FINANCE_DASHBOARD);
-                } catch (error) {
-                  DebugLog("error " + error);
-                }
-              } else {
-                const message =
-                  error.response != null
-                    ? error.displayErrorMessage
-                    : "Unknown";
-
-                if (message)
-                  showErrorAlert(
-                    error.message,
-                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
-                  );
-              }
-            });
-        });
-      } else {
-        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
-      }
-    } catch (error) {
-      const message = error.response != null ? error.response : error.message;
-      showErrorAlert(
-        error.message,
-        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
-      );
-    }
-  }
+ 
 
   function requestOnHoldSummaryData() {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
         setLoading(true); // Hide the progress dialog
-        //{"pageNumber":0,"pageSize":100}
+
         const requestData = {
-          pageNumber: 0,
-          pageSize: 100,
-          // requestId: generateRequestId(),
-          // loginId: getFromLocalStorage(LOGIN_ID),
+          requestId: generateRequestId(),
+          loginId: getFromLocalStorage(LOGIN_ID),
           sessionId: getFromLocalStorage(SESSION_ID),
           //contentData: encryptedContentData,
         };
 
-        getOnHoldCompany(requestData)
+        getOnHoldSummary(requestData)
           .then((response) => {
             setOnHoldSummary(response.data.result.onHoldSummaryList);
             setTotalNoOfRows(response.data.result.onHoldSummaryList.length);
             setLoading(false);
           })
           .catch((error) => {
-            if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
-              try {
-                navigate("/");
-              } catch (error) {
-                DebugLog("error " + error);
-              }
-            } else {
-              const message =
-                error.response != null ? error.displayErrorMessage : "Unknown";
-
-              if (message)
-                showErrorAlert(
-                  error.message,
-                  ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
-                );
-            }
+            const message =
+              error.response != null ? error.response : error.message;
+            showErrorAlert(
+              error.message,
+              ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
+            );
           });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
@@ -286,42 +146,6 @@ export function OnHoldSummary() {
     }
   }
 
-  const cancelHold = () => {
-    const selectedData = onHoldSummary.filter((row) =>
-      selectedRows.includes(row.id)
-    );
-    console.log("Selected rows data:", selectedData);
-
-    if (selectedData.length > 0) {
-      //   //const navData = getFromLocalStorageJsonObject(NAV_PAYOUT_DETAIL_DATA)
-      //   DebugLog("nav Daat======="+JSON.stringify(navData))
-
-      //   const extractCompanyCode = selectedData.map(row => row.companyCode);
-
-      //  const  onHoldSelectedRowData = {
-
-      //     companyCode : extractCompanyCode,
-      //     cutOffDate: navData.cutOffDate,
-      //     payoutCycle: navData.payoutCycle,
-      //     payoutStatus: navData.payoutStatus,
-      //     payoutByDate:navData.payoutDate
-      //   };
-
-      //   DebugLog("onHoldSelectedRowData  Daat======="+JSON.stringify(onHoldSelectedRowData))
-      //   //requestPayoutOnHold(onHoldSelectedRowData)
-
-      showErrorAlert("", "COMING SOON!");
-
-      resetSelection();
-    } else {
-      showErrorAlert("Alert", "Please choose some rows first!");
-    }
-  };
-
-  const startDownload = () => {
-    showErrorAlert("", "COMING SOON!");
-    resetSelection();
-  };
   function blockNavigation(location, action) {
     // Block navigation if action is "pop", which indicates back/forward button press
     if (action === "pop") {
@@ -467,22 +291,20 @@ export function OnHoldSummary() {
                     currentPage * pageSize,
                     (currentPage + 1) * pageSize
                   )}
-                  columns={onHoldCompanyColumnHeader}
+                  columns={onHoldSummaryColumnHeader}
                   components={{ Toolbar: GridToolbar }}
                   checkboxSelection
-                  selectionModel={selectedRows}
-                  onSelectionModelChange={handleSelectionChange}
-                  onPageChange={handlePageChange}
+                  selecion
                   pageSize={pageSize}
                   rowCount={filteredRows.length}
                   pagination
-                  disableSelectionOnClick // Disable row selection on row click
-                  onRowClick={handleRowClick}
+                  onPageChange={handlePageChange}
                 />
               </Box>
             ) : (
               NoDataFound()
             )}
+            
           </Grid>
 
           {onHoldSummary.length > 0 ? (
@@ -507,64 +329,85 @@ export function OnHoldSummary() {
           {/* Action Buttons */}
 
           {onHoldSummary.length > 0 ? (
-            <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
-              <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-                {userRole === "Biz Ops" ? (
-                  <CustomButton
-                    btnBG={colors.grey[900]}
-                    btnColor={colors.grey[100]}
-                    btnStartIcon={
-                      <img src="../../assets/common/Cross.svg" width={22} />
-                    }
-                    btnTxt={"Request Release"}
-                    onClick={cancelHold}
-                  ></CustomButton>
-                ) : (
-                  ""
-                )}
-                {userRole === "Biz Ops Head" ? (
-                  <CustomButton
-                    btnBG={colors.grey[900]}
-                    btnColor={colors.grey[100]}
-                    btnStartIcon={
-                      <img src="../../assets/common/Cross.svg" width={22} />
-                    }
-                    btnTxt={"Cancel"}
-                    onClick={cancelHold}
-                  ></CustomButton>
-                ) : (
-                  ""
-                )}
-                {userRole === "Biz Ops Head" ? (
-                  <CustomButton
-                    btnBG={colors.grey[900]}
-                    btnColor={colors.grey[100]}
-                    btnStartIcon={
-                      <img src="../../assets/common/Tick.svg" width={22} />
-                    }
-                    btnTxt={"Release"}
-                    onClick={startDownload}
-                  ></CustomButton>
-                ) : (
-                  ""
-                )}
-                <CustomButton
-                  btnBG={colors.grey[900]}
-                  btnColor={colors.grey[100]}
-                  btnStartIcon={
-                    <img src="../../assets/common/Download.svg" width={22} />
-                  }
-                  btnEndIcon={
-                    <img src="../../assets/common/Arrow-down.svg" height={8} />
-                  }
-                  btnTxt={"Download"}
-                  onClick={startDownload}
-                ></CustomButton>
-              </Stack>
+          <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
+            <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
+              <CustomButton
+                btnBG={colors.grey[900]}
+                btnColor={colors.grey[100]}
+                btnStartIcon={
+                  <img src="../../assets/common/Cross.svg" width={22} />
+                }
+                btnTxt={"Cancel"}
+              ></CustomButton>
+
+              <CustomButton
+                btnBG={colors.grey[900]}
+                btnColor={colors.grey[100]}
+                btnStartIcon={
+                  <img src="../../assets/common/Tick.svg" width={22} />
+                }
+                btnTxt={"Release"}
+              ></CustomButton>
+
+              <CustomButton
+                btnBG={colors.grey[900]}
+                btnColor={colors.grey[100]}
+                btnStartIcon={
+                  <img src="../../assets/common/Download.svg" width={22} />
+                }
+                btnEndIcon={
+                  <img src="../../assets/common/Arrow-down.svg" height={8} />
+                }
+                btnTxt={"Download"}
+              ></CustomButton>
+            </Stack>
+
+            <Grid 
+              container
+              direction={"column"}
+              mt={3}
+              p={3}
+              xs={12}
+              sx={{
+                background: colors.grey[900],
+                borderRadius: "12px",
+              }}
+            >
+                <Grid container fontSize={20} fontWeight={700}>
+                  <Grid item xs={6}>Activity</Grid>
+                  <Grid item xs={6}>Date / Time </Grid>
+
+                </Grid>
+                
+                <Grid container direction={"row"} mt={2} spacing={2} alignItems={"center"}>
+                  <Grid item>
+                    <Avatar sx={{ bgcolor: colors.grey[900], color: colors.grey[100], border: "1px solid #888888",  }}>SY</Avatar>
+                  </Grid>
+                  <Grid item spacing={3}>
+                    <Grid container direction={"row"} alignItems={"center"} spacing={1}>
+                      <Grid item><Typography variant="h6">Kellie</Typography></Grid>
+                      <Grid item><Typography>Released On Hold</Typography></Grid>
+                      <Grid item><Typography variant="h6">Coffas Technology</Typography></Grid>
+                      
+                    </Grid>
+                    <Typography color={colors.primary[100]} fontWeight={"500"}>Attachment (Proof)</Typography>
+                  </Grid>
+                  <Grid item 
+                      sx={{
+                        position:"absolute",
+                        right:"4%",
+                        color:colors.grey[300],
+                      }}
+                    >7 Nov 2023, 8:13 AM</Grid>
+                </Grid>
+
+                
             </Grid>
-          ) : (
-            ""
-          )}
+
+          </Grid>
+  ) : (
+    ""
+  )}
           {/* Action Buttons */}
         </Grid>
       </SnackbarProvider>
