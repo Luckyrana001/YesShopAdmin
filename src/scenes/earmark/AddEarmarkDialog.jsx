@@ -1,4 +1,4 @@
-// CustomDialog.js
+
 import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box, Grid, Typography } from '@mui/material';
 
@@ -9,17 +9,52 @@ function AddEarmarkDialogInput({ open, onClose }) {
     reason: '',
     // Add more fields as needed
   });
+  const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
-    const { dealer, value } = e.target;
-    setFormData({ ...formData, [dealer]: value });
+    const {  name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    //const { name, value } = e.target;
+   //setFormData({ ...formData, [name]: value });
+    // Clear the error message when the user types
+    setErrors({ ...errors, [name]: '' });
   };
 
-  const handleSubmit = () => {
-    // Handle form submission
-    console.log(formData);
-    // Close the dialog
-    onClose();
+//   const handleSubmit = () => {
+//     // Handle form submission
+//     console.log(formData);
+//     // Close the dialog
+//     onClose();
+//   };
+
+const handleSubmit = (e) => {
+    e.preventDefault();
+    // Validation logic
+    const newErrors = {};
+    if (!formData.dealer.trim()) {
+      newErrors.dealer = 'Dealer Name is required';
+    }
+    if (!formData.earmark.trim()) {
+      newErrors.earmark = 'Earmark is required';
+     } //else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    //   newErrors.email = 'Invalid email address';
+    // }
+
+    if (!formData.reason.trim()) {
+        newErrors.reason = 'Reason is required';
+       }
+    if (Object.keys(newErrors).length === 0) {
+      // Form is valid, submit the data
+      console.log('Form data:', formData);
+
+       // Close the dialog
+      onClose();
+      // You can perform additional actions like sending data to a server here
+    } else {
+      // Form is not valid, update the errors state
+      setErrors(newErrors);
+    }
   };
 
   return (
@@ -30,34 +65,40 @@ function AddEarmarkDialogInput({ open, onClose }) {
       <Grid container justifyContent="center" alignItems="center" item ><Typography variant="h6"><b>Add Earmark</b></Typography></Grid>  
       <Grid container justifyContent="center" alignItems="center" item ><Typography variant="h6">Please specify Earmark for the dealer</Typography></Grid>
       </Box>
-        <form>
+        <form onSubmit={handleSubmit}>
           <TextField
             autoFocus
             margin="dense"
-            label="dealer"
+            label="Dealer"
             type="text"
-            name="Dealer"
+            name="dealer"
             fullWidth
             value={formData.dealer}
             onChange={handleInputChange}
+            error={Boolean(errors.dealer)}
+            helperText={errors.dealer}
           />
           <TextField
             margin="dense"
-            label="earmark"
+            label="Earmark"
             type="text"
-            name="Earmark"
+            name="earmark"
             fullWidth
             value={formData.earmark}
             onChange={handleInputChange}
+            error={Boolean(errors.earmark)}
+            helperText={errors.earmark}
           />
            <TextField
             margin="dense"
-            label="reason"
+            label="Reason"
             type="text"
-            name="Reason"
+            name="reason"
             fullWidth
-            value={formData.earmark}
+            value={formData.reason}
             onChange={handleInputChange}
+            error={Boolean(errors.reason)}
+            helperText={errors.reason}
           />
           {/* Add more fields as needed */}
         </form>
@@ -66,7 +107,7 @@ function AddEarmarkDialogInput({ open, onClose }) {
         <Button onClick={onClose} color="primary">
           Cancel
         </Button>
-        <Button onClick={handleSubmit} color="primary">
+        <Button  variant="contained" type="submit" onClick={handleSubmit} color="primary">
           Submit
         </Button>
       </DialogActions>

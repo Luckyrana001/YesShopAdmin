@@ -81,6 +81,7 @@ export function EarmarkScreen() {
 
   const handleClose = () => {
     setOpen(false);
+    DebugLog("Dialog Closed")
   };
 
   const handlePageJump = (event) => {
