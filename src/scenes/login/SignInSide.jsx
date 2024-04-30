@@ -16,14 +16,10 @@ export default function SignInSide() {
     <Grid container component="main" sx={{ height: "100vh" }}>
       {/* BG */}
       <Grid
-        item
+        container
         display="flex"
         justifyContent="center"
         alignItems="center"
-        xl={12}
-        lg={12}
-        md={12}
-        sm={12}
         xs={12}
         sx={{
           backgroundImage: "url(/assets/login/Login-BG-2.jpg)",
@@ -50,15 +46,15 @@ export default function SignInSide() {
           <Grid
             item
             xs={12}
-            sm={5}
-            md={4}
-            lg={5}
+            sm={8}
+            md={5}
+            lg={5.5}
             xl={6}
             component={Paper}
             elevation={6}
             sx={{
               borderRadius: 2,
-              border: "1px solid #E4EBF7",
+                border: "1px solid #E4EBF7",
             }}
           >
             {/* Header */}
