@@ -142,7 +142,7 @@ const handleSubmit = (e) => {
               <CustomButton
                 btnBG={colors.primary[100]}
                 btnColor={colors.grey[900]}
-                btnTxt={"Save Earmark "}
+                btnTxt={"Save Earmark "}  
                 btnBorder={"1px solid"+colors.primary[100]}
               ></CustomButton>
 

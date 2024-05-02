@@ -32,12 +32,12 @@ const HighlightBox = ({
         }}
       >
         <Grid container direction={"row"}>
-          <Grid item xs={8.5} sm={8} md={9} lg={9.75}>
+          <Grid item xs={9.5} sm={10} md={10} lg={10.5}>
             <Grid container direction={"column"}>
               <Grid
                 item
                 sx={{
-                  margin: "0px 0 0 20px",
+                  margin: "5px 0 5px 20px",
                   padding: "0",
                   fontSize: "18px",
                   fontWeight: "600",
@@ -49,7 +49,7 @@ const HighlightBox = ({
               <Grid
                 item
                 sx={{
-                  margin: "0px 0 0 20px",
+                  margin: "5px 0 5px 20px",
                   fontSize: "36px",
                   fontWeight: "800",
                 }}
@@ -59,7 +59,7 @@ const HighlightBox = ({
             </Grid>
           </Grid>
 
-          <Grid item xs={3.5} sm={4} md={3} lg={2.25}>
+          <Grid item xs={2.5} sm={2} md={2} lg={1.5}>
             <Box
               display={"flex"}
               alignItems="center"
