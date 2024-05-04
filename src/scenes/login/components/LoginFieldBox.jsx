@@ -1,4 +1,11 @@
-import { Button, FormControlLabel, Grid, Link, TextField } from "@mui/material";
+import {
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Grid,
+  Link,
+  TextField,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { atom, useAtom } from "jotai";
@@ -52,6 +59,8 @@ import {
   LOGIN_ID,
   LOGIN_RESPONSE,
   MESSAGE_KEY,
+  REMEMBER_ME_CHECKBOX,
+  REMEMBER_USER_NAME,
   SESSION_ID,
   USER_ID,
   USER_NAME,
@@ -64,7 +73,6 @@ function LoginFieldBox() {
   const navigate = useNavigate();
   const [, setAuthStatus] = useAtom(isAuthPageAtom);
   const [getDialogStatus, setErrorDialog] = useAtom(showErrorAlertDialog);
-  const [sessionIdState, setSessionIdState] = useAtom(sessionIdStatus);
   const isNetworkConnectionAvailable = UseOnlineStatus();
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -74,14 +82,31 @@ function LoginFieldBox() {
   const [getProgressbarText, setProgressbarText] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [checked, setChecked] = useState(false);
+  const [sessionIdState, setSessionIdState] = useAtom(sessionIdStatus);
 
-  useEffect(() => {
-    resetAllConfigration();
-
+  const updateSavedUserName = () => {
+    const isCheckboxRemembered =  getFromLocalStorage(REMEMBER_ME_CHECKBOX)
+    
+     if(isCheckboxRemembered && isCheckboxRemembered === "true") {
+      const userName =  getFromLocalStorage(REMEMBER_USER_NAME)
+      initialValues.emailValue = userName
+      setChecked(true)
+    }else{
+      setChecked(false)
+      initialValues.emailValue = 'bizops_head'
+    }
+  };
+  const getConfigration = () => {
     const basicAuthTokken = getFromLocalStorage(BASIC_AUTH_TOKKEN);
     if (basicAuthTokken === undefined || basicAuthTokken === null)
       requestBasicAuth(false);
+  };
 
+  useEffect(() => {
+    updateSavedUserName()
+    resetAllConfigration()
+    getConfigration()
     showNoInternetSnackBar();
   }, [isNetworkConnectionAvailable, enqueueSnackbar]);
 
@@ -100,7 +125,6 @@ function LoginFieldBox() {
       setLoading(true);
       getBasicAuth(true)
         .then((response) => {
-          DebugLog("getBasicAuth.data=====" + JSON.stringify(response.data));
           saveToLocalStorage(MESSAGE_KEY, response.data.messageKey);
           saveToLocalStorage(BASIC_AUTH_TOKKEN, response.data.basicAuthToken);
 
@@ -150,7 +174,6 @@ function LoginFieldBox() {
             ApiType.SIGN_IN
           )
             .then((encryptedLoginData) => {
-              DebugLog("Content data Login Data=====" + encryptedLoginData);
               saveToLocalStorage(LOGIN_ID, signInData.userName);
               const signInReqestData = {
                 requestId: generateRequestId(),
@@ -162,7 +185,6 @@ function LoginFieldBox() {
               getUserLoginDetails(signInReqestData)
                 .then((response) => {
                   const sessionId = response.data.result.sessionId;
-                  DebugLog("sessionId=====" + sessionId);
 
                   saveToLocalStorage(SESSION_ID, sessionId);
                   saveToLocalStorageJsonObject(
@@ -170,7 +192,6 @@ function LoginFieldBox() {
                     response.data.result.userAccessDetails.menuList
                   );
                   setSessionIdState(sessionId);
-
                   saveToLocalStorage(USER_ID, response.data.result.userId);
                   saveToLocalStorage(USER_NAME, response.data.result.name);
                   saveToLocalStorage(USER_ROLE, response.data.result.role);
@@ -189,7 +210,6 @@ function LoginFieldBox() {
                       ERROR_WHILE_AUTHENTICATING_USER + JSON.stringify(message)
                     );
                   } else {
-                    DebugLog("  error.data   " + JSON.stringify(error.data));
                     const message =
                       error.data != null
                         ? error.data.displayErrorMessage
@@ -228,11 +248,18 @@ function LoginFieldBox() {
       setEmail(values.emailValue);
       setPassword(values.passwordValue);
 
+      if(checked===true){
+        const userName = values.emailValue
+        saveToLocalStorage(REMEMBER_USER_NAME,userName)
+        DebugLog("REMEMBER_USER_NAME=====",getFromLocalStorage(REMEMBER_USER_NAME))
+      } else {
+        DebugLog("REMEMBER_ is empty=====",getFromLocalStorage(REMEMBER_USER_NAME))
+        saveToLocalStorage(REMEMBER_USER_NAME,"")
+        saveToLocalStorage(REMEMBER_ME_CHECKBOX,false)
+      }
+   
       if (getFromLocalStorage(BASIC_AUTH_TOKKEN) != null)
-        //values.preventDefault();
-        DebugLog(values);
-      DebugLog(values.emailValue);
-
+      
       doSignUp(values.emailValue, values.passwordValue);
       // goToDashboard();
     } else {
@@ -242,7 +269,6 @@ function LoginFieldBox() {
 
   function showErrorAlert(title, content) {
     try {
-      DebugLog("error.data=====" + content);
       setError();
       setLoading(false);
 
@@ -253,7 +279,18 @@ function LoginFieldBox() {
       DebugLog(error);
     }
   }
-
+  const handleRemberMeClick = (event) => {
+    setChecked(event.target.checked);
+    saveToLocalStorage(REMEMBER_ME_CHECKBOX,event.target.checked)
+    
+    // if(event.target.checked===true){
+    //   saveToLocalStorage(REMEMBER_ME_CHECKBOX,true)
+    // }else{
+    //   saveToLocalStorage(REMEMBER_ME_CHECKBOX,false)
+    // }
+    // Do something with the new value of checked
+    console.log("Checkbox checked:", event.target.checked);
+  };
   //  login button click listener
   function goToDashboard() {
     setAuthStatus(false);
@@ -301,6 +338,7 @@ function LoginFieldBox() {
                     autoComplete="current"
                     autoFocus
                     onBlur={handleBlur}
+                    initialValues={email}
                     onChange={handleChange}
                     value={values.emailValue}
                     error={!!touched.emailValue && !!errors.emailValue}
@@ -326,7 +364,13 @@ function LoginFieldBox() {
                   />
 
                   <FormControlLabel
-                    control={<CheckBox value="remember" color="primary" />}
+                    control={
+                      <Checkbox
+                        checked={checked}
+                        onChange={handleRemberMeClick}
+                        color="primary"
+                      />
+                    }
                     label={REMEMBER_ME}
                   />
 
@@ -383,3 +427,6 @@ const initialValues = {
   //   address1: "",
   //   address2: "",
 };
+
+// emailValue: "bizops_head",
+// passwordValue: "ytlc@xm1234",

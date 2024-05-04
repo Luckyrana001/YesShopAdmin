@@ -1,13 +1,18 @@
 import React from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import PriceFormatter from "../utils/PriceFormatter";
+import { colors } from "@mui/material";
+import CustomButton from "./CustomButton";
 
 const CurrencyCellRenderer = ({ value }) => {
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
       {/* <AttachMoneyIcon fontSize="small" /> */}
-      <span>RM</span> {/* Malaysian Ringgit symbol */}
-      <span style={{ marginLeft: "4px" }}>{value}</span>
+      {/* <span>RM</span>  */}
+      {/* Malaysian Ringgit symbol */}
+      <span style={{ marginLeft: "4px" }}> <PriceFormatter price={value} /></span>
+     
     </div>
   );
 };
@@ -140,6 +145,20 @@ export const onHoldCompanyColumnHeader = [
 //                     "reason": "Negative Balance",
 //                     "earmark": 5000
 
+
+// "accountList": [
+//   {
+//       "accountName": "Sanity PDC Testing",
+//       "accountCode": "T1057",
+//       "vendorCode": null,
+//       "freezeReason": null,
+//       "pic": null,
+//       "bankName": "CIMB Bank Berhad",
+//       "bankAccountNumber": "111111111111"
+//   }
+// ]
+
+
 export const earmarksDetailsColumnHeader = [
   {
     field: "id",
@@ -186,6 +205,156 @@ export const earmarksDetailsColumnHeader = [
     flex: 1,
     headerAlign: "left",
     cellClassName: "bold-column--cell",
+    renderCell: (params) => <CurrencyCellRenderer value={params.value} />,
+    
+  },
+];
+
+// {
+//   "companyName": "TM TOP EMPIRE",
+//   "companyCode": "A7944",
+//   "vendorCode": "VC2000000",
+//   "bankName": "CIMB",
+//   "bankAccountNumber": "556010614223",
+//   "freezeReason": "New dealer",
+//   "status": "Frozen - Dealer",
+//   "freezeBy": "Sung Pik Yeng(Kellie)",
+//   "freezeOn": 1713167285000,
+//   "createdOn": 1713167285000,
+// },
+
+// {
+//   "id": "1",
+//   "name": "TM TOP EMPIRE",
+//   "code": "A7944",
+//   "type": "CREDIT",
+//   "details": "Rental",
+//   "reason": "Rental",
+//   "date": "2024-04-21",
+//   "status": "Scheduled",
+//   "amount": "500.00"
+// },
+
+
+export const debitCreditAccountDetailsColumnHeader = [
+  {
+    field: "id",
+    headerName: "ID",
+    flex: 0.5,
+    hide: true,
+    headerAlign: "left",
+  },
+  {
+    field: "name",
+    headerName: "NAME",
+    flex: 1.5,
+    cellClassName: "bold-column--cell",
+    headerAlign: "left",
+  },
+ 
+  {
+    field: "code",
+    headerName: "CODE",
+    flex: 1,
+    headerAlign: "left",
+  },
+ 
+ 
+  {
+    field: "type",
+    flex: 1,
+    headerName: "TYPE",
+    headerAlign: "left",
+   
+  },
+  {
+    field: "details",
+    headerName: "DETAILS",
+    flex: 1,
+    headerAlign: "left",
+  },
+  {
+    field: "date",
+    headerName: "DATE",
+    flex: 1,
+    headerAlign: "left",
+  },
+  {
+    field: "status",
+    headerName: "STATUS",
+    flex: 1,
+    headerAlign: "left",
+    cellClassName: "bold-column--cell",
+    headerClassName: (params) =>
+      params.field === "payOutDate" ? "bold-header-style" : null,
+    cellClassName: "name-column--cell",
+    
+  },
+  {
+    field: "amount",
+    headerName: "AMOUNT",
+    flex: 1,
+    headerAlign: "left",
+    cellClassName: "bold-column--cell",
+    renderCell: (params) => <CurrencyCellRenderer value={params.value} />,
+  },
+];
+
+
+
+
+
+
+export const freezedAccountDetailsColumnHeader = [
+  {
+    field: "id",
+    headerName: "ID",
+    flex: 0.5,
+    hide: true,
+    headerAlign: "left",
+  },
+  {
+    field: "companyName",
+    headerName: "NAME",
+    flex: 1.5,
+    cellClassName: "bold-column--cell",
+    headerAlign: "left",
+  },
+  {
+    field: "status",
+    flex: 1,
+    headerName: "STATUS",
+    headerAlign: "left",
+    headerClassName: (params) =>
+      params.field === "payOutDate" ? "bold-header-style" : null,
+    cellClassName: "name-column--cell",
+  },
+  {
+    field: "vendorCode",
+    headerName: "CODE",
+    flex: 1,
+    headerAlign: "left",
+  },
+ 
+  {
+    field: "freezeBy",
+    headerName: "FROZE BY",
+    flex: 1,
+    headerAlign: "left",
+  },
+  {
+    field: "freezeOn",
+    headerName: "DATE",
+    flex: 1,
+    headerAlign: "left",
+  },
+  {
+    field: "freezeReason",
+    headerName: "REASON",
+    flex: 1,
+    headerAlign: "left",
+    cellClassName: "bold-column--cell",
+    
     
   },
 ];

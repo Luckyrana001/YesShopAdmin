@@ -4,7 +4,6 @@ import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import { tokens } from "../../theme";
 import GreetingHeader from "../../components/GreetingHeader";
-import SectionHeader from "../../components/SectionHeader";
 import CustomButton from "../../components/CustomButton";
 import Grid from "@mui/material/Unstable_Grid2";
 import HighlightStats from "../../components/HighlightStats";
@@ -22,12 +21,11 @@ import * as CONSTANT from "../../constants/Constant";
 
 import {
   globalSearchText,
-  isAuthPageAtom,
+  selectedItems,
   showErrorAlertDialog,
 } from "../../config/AppConfig";
 import {
   ALERT,
-  ERROR_FOUND_DURING_API_CALL,
   ERROR_WHILE_FETCHING_DATA,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
@@ -40,8 +38,18 @@ import {
   MESSAGE_KEY,
   SESSION_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
-import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
-import { getEarMarkDetails } from "../../services/ApiService";
+import {
+  generateRandomId,
+  generateRequestId,
+} from "../../utils/RequestIdGenerator";
+import {
+  deleteEarMarkDetails,
+  getEarMarkDetails,
+  getEarMarkTimelineDetails,
+  getEarmarkActivityDetails,
+  getEarmarkDetailsSummaryTopBarItems,
+  updateEarMarkDetails,
+} from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
 import { earmarksDetailsColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
@@ -49,6 +57,8 @@ import { ApiErrorCode, ApiType } from "../../services/ApiTags";
 import UserActivityInfo from "../../components/UserActivity";
 import { initializeEncryption } from "../../services/AesGcmEncryption";
 import AddEarmarkDialogInput from "./AddEarmarkDialog";
+import EarmarkHighlightStats from "../../components/EarmarkHighlightedStats";
+import SaveAndRemoveEarmarkDialog from "./SaveAndRemoveEarmarkDialog";
 
 export function EarmarkScreen() {
   const theme = useTheme();
@@ -57,7 +67,6 @@ export function EarmarkScreen() {
 
   const isNetworkConnectionAvailable = UseOnlineStatus();
 
-  const [, setAuthStatus] = useAtom(isAuthPageAtom);
   const [getDialogStatus, setErrorDialog] = useAtom(showErrorAlertDialog);
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -67,13 +76,70 @@ export function EarmarkScreen() {
   const [getProgressbarText, setProgressbarText] = useState("");
 
   const [earmarkDetails, setearmarkDetails] = useState([]);
-  const [gridHeight, setGridHeight] = useState(108); // Default height
-  const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
-  const [pageSize, setPageSize] = useState(25);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
+  const [earmarkTimelineDetails, setearmarkTimelineDetails] = useState([]);
+  const [earmarkActivityDetails, setearmarkActivityDetails] = useState([]);
+  const [earmarkDetailsSummary, setearmarkDetailsSummary] = useState([]);
+
+  // const [gridHeight, setGridHeight] = useState(108); // Default height
+  // const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
+  // const [pageSize, setPageSize] = useState(5);
+  // const [currentPage, setCurrentPage] = useState(0);
+  // const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
   const [open, setOpen] = useState(false);
+  const [openSaveAndRemoveDialog, setOpenSaveAndRemoveDialog] = useState(false);
+  const [selectedItem, setSelectedItem] = useAtom(selectedItems);
+
+  const [gridHeight, setGridHeight] = useState(500); // Default height
+  const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
+  const [pageSize, setPageSize] = useState(15);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
+  const [selectedRows, setSelectedRows] = React.useState([]);
+
+  // increase - decrease list layout height on available list itmes count
+  function getDataGridHeight() {
+    // Calculate the total height required for the grid
+    const headerHeight = 60; // Height of header row
+    const rowHeight = 60; // Height of each data row
+    let rowCount = 0;
+    if (totalNoOfRows <= pageSize) {
+      rowCount = totalNoOfRows; // Total number of data rows
+    } else {
+      rowCount = pageSize; // Total number of data rows
+    }
+
+    const totalHeight = headerHeight + rowCount * rowHeight;
+
+    // Set the grid height
+    setGridHeight(totalHeight);
+  }
+  const handlePageSizeChange = (newPageSize) => {
+    // Here, you would fetch new data based on the new page size
+    // For the sake of this example, let's just set the page size
+    // without updating the data
+    console.log("Page size changed to:", newPageSize);
+    setPageSize(newPageSize);
+    getDataGridHeight();
+  };
+
+  useEffect(() => {
+    checkUserAuthExistOrNot();
+
+    getDataGridHeight();
+
+    //getEarmarksDetailsSummary()
+
+    requestEarMarkDetailsData();
+
+    getEarmarkTimelineDetails();
+
+    //  getActivityDetails()
+
+    showNoInternetSnackBar();
+
+    navigate(blockNavigation);
+  }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
 
   const handleOpen = () => {
     setOpen(true);
@@ -81,63 +147,123 @@ export function EarmarkScreen() {
 
   const handleClose = () => {
     setOpen(false);
-    DebugLog("Dialog Closed")
+    DebugLog("Dialog Closed");
+  };
+
+  const handleCloseSaveAndRemoveEarmarkDialog = () => {
+    setOpenSaveAndRemoveDialog(false);
+    DebugLog("Dialog Closed");
   };
 
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
   };
 
-  const filteredRows = earmarkDetails.filter((row) =>
-    Object.values(row).some((value) =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
-
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
 
-  function addNewEarmark(){
+  function addNewEarmark() {
+    //navigate(CONSTANT.ADD_DEALER_ROUTE)
     setOpen(true);
   }
-
-  // increase - decrease list layout height on available list itmes count
-  function getDataGridHeight() {
-    // Calculate the total height required for the grid
-    const headerHeight = 100; // Height of header row
-    const rowHeight = 100; // Height of each data row
-    const rowCount = totalNoOfRows; // Total number of data rows
-    const totalHeight = headerHeight + rowCount * rowHeight;
-
-    // Set the grid height
-    setGridHeight(totalHeight);
-  }
-
   function checkUserAuthExistOrNot() {
     if (getFromLocalStorage(SESSION_ID) === "") {
       navigate("/");
       return;
     }
   }
+  const filteredRows = earmarkDetails.filter((row) =>
+    Object.values(row).some((value) =>
+      String(value).toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
 
-  useEffect(() => {
-    checkUserAuthExistOrNot();
-
-    getDataGridHeight();
-
-    requestEarMarkDetailsData();
-
-    showNoInternetSnackBar();
-
-    navigate(blockNavigation);
-  }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
-
-  function requestEarMarkDetailsData() {
+  function getEarmarkTimelineDetails() {
     try {
       if (isNetworkConnectionAvailable) {
-        setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); 
+        //setProgressbarText(LOADING_PLEASE_WAIT);
+        // setLoading(true);
+
+        const requestObject = {
+          pageNumber: 0,
+          pageSize: 100,
+          name: "Ghe Network",
+          date: "2024-05-04 17:48:00.0",
+          code: "A00010001AC",
+          vendor: "00004",
+          reason: "Negative Balance",
+          earmark: "5000",
+        };
+
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const requestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          getEarMarkTimelineDetails(requestData)
+            .then((response) => {
+              const contentData =
+                response.data.result.earmarkAuditDetails.content.map((row) => ({
+                  ...row,
+                  id: generateRandomId(),
+                }));
+              setearmarkTimelineDetails(contentData);
+              //setTotalNoOfRows(response.data.result.earmarkDetails.content.length);
+              //setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+      );
+    }
+  }
+  function getEarmarksDetailsSummary() {
+    try {
+      if (isNetworkConnectionAvailable) {
+        // setProgressbarText(LOADING_PLEASE_WAIT);
+        // setLoading(true);
 
         const requestObject = {
           pageNumber: 0,
@@ -149,22 +275,22 @@ export function EarmarkScreen() {
           getFromLocalStorage(MESSAGE_KEY),
           ApiType.GET_EARMARKS_DETAILS
         ).then((encryptedContentData) => {
-          const onholdCompanyRequestData = {
+          const requestData = {
             requestId: generateRequestId(),
             loginId: getFromLocalStorage(LOGIN_ID),
             sessionId: getFromLocalStorage(SESSION_ID),
             contentData: encryptedContentData,
           };
 
-          getEarMarkDetails(onholdCompanyRequestData)
+          getEarmarkDetailsSummaryTopBarItems(requestData)
             .then((response) => {
-              const contentData = response.data.result.earmarkDetails.content.map((row) => ({
-                ...row,
-                id: generateRandomId(),
-              }));
-              setearmarkDetails(contentData);
-              setTotalNoOfRows(response.data.result.earmarkDetails.content.length);
-              setLoading(false);
+              // const contentData = response.data.result.earmarkDetails.content.map((row) => ({
+              //   ...row,
+              //   id: generateRandomId(),
+              // }));
+              setearmarkDetailsSummary(response.data.result);
+              //setTotalNoOfRows(response.data.result.earmarkDetails.content.length);
+              // setLoading(false);
             })
             .catch((error) => {
               if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
@@ -207,6 +333,316 @@ export function EarmarkScreen() {
     }
   }
 
+  function getActivityDetails() {
+    try {
+      if (isNetworkConnectionAvailable) {
+        // setProgressbarText(LOADING_PLEASE_WAIT);
+        // setLoading(true);
+
+        const requestObject = {
+          pageNumber: 0,
+          pageSize: 100,
+          fromDate: "2024-05-02T02:49:00.309Z",
+          toDate: "2024-05-02T02:49:00.309Z",
+        };
+
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const requestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          getEarmarkActivityDetails(requestData)
+            .then((response) => {
+              const contentData =
+                response.data.result.earmarkDetails.content.map((row) => ({
+                  ...row,
+                  id: generateRandomId(),
+                }));
+              setearmarkActivityDetails(contentData);
+              //setTotalNoOfRows(response.data.result.earmarkDetails.content.length);
+              // setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+      );
+    }
+  }
+
+  function requestUpdateEarMarkDetailsData(params) {
+    try {
+      if (isNetworkConnectionAvailable) {
+        setProgressbarText(LOADING_PLEASE_WAIT);
+        setLoading(true);
+
+        const requestObject = {
+          code: params.code,
+          date: params.date,
+          earmark: params.earmark,
+          // fromDate: params.fromDate,
+          // toDate: params.toDate,
+          name: params.name,
+          reason: params.reason,
+        };
+
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const requestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          updateEarMarkDetails(requestData)
+            .then((response) => {
+              //setearmarkDetails(contentData);
+              setLoading(false);
+              showErrorAlert("SUCCESS", "Earmark updated Successfully.");
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+      );
+    }
+  }
+
+  function requestDeleteEarMarkDetailsData(params) {
+    try {
+      if (isNetworkConnectionAvailable) {
+        setProgressbarText(LOADING_PLEASE_WAIT);
+        setLoading(true);
+
+        const requestObject = {
+          code: params.code,
+          date: params.date,
+          earmark: params.earmark,
+          // fromDate: params.fromDate,
+          // toDate: params.toDate,
+          name: params.name,
+          reason: params.reason,
+        };
+
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const requestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          deleteEarMarkDetails(requestData)
+            .then((response) => {
+              //setearmarkDetails(contentData);
+              setLoading(false);
+              showErrorAlert("REMOVED", "Earmark removed Successfully.");
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+      );
+    }
+  }
+
+  function requestEarMarkDetailsData() {
+    try {
+      if (isNetworkConnectionAvailable) {
+        setProgressbarText(LOADING_PLEASE_WAIT);
+        setLoading(true);
+
+        const requestObject = {
+          pageNumber: 0,
+          pageSize: 100,
+        };
+
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const requestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          getEarMarkDetails(requestData)
+            .then((response) => {
+              const contentData =
+                response.data.result.earmarkDetails.content.map((row) => ({
+                  ...row,
+                  id: generateRandomId(),
+                }));
+              setearmarkDetails(contentData);
+              setTotalNoOfRows(
+                response.data.result.earmarkDetails.content.length
+              );
+              setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+      );
+    }
+  }
+  const handleRowClick = (params) => {
+    setSelectedItem(params.row);
+
+    setOpenSaveAndRemoveDialog(true);
+    //alert("Back button is disabled.");
+  };
+
   function blockNavigation(location, action) {
     // Block navigation if action is "pop", which indicates back/forward button press
     if (action === "pop") {
@@ -219,7 +655,6 @@ export function EarmarkScreen() {
 
   function showErrorAlert(title, content) {
     try {
-    
       setError();
       setLoading(false);
 
@@ -241,12 +676,12 @@ export function EarmarkScreen() {
       });
     }
   };
+
   return (
     /* Main Container */
     <Box>
       <SnackbarProvider maxSnack={3}>
         <ConnectionStatus />
-        <AddEarmarkDialogInput open={open} onClose={handleClose} />
         <ShowErrorAlertDialog
           status={getDialogStatus}
           title={title}
@@ -276,15 +711,16 @@ export function EarmarkScreen() {
           {/* Greetings Header */}
 
           {/* Highlight Stats */}
-          <HighlightStats
-            highlightTotal={"100,000"}
-            highlight1={"Dealers"}
-            highlight1Stat={"4"}
-            highlight2={"Device Reimburse"}
-            highlight2Stat={"RM 100"}
-            highlight3={"Incentives"}
-            highlight3Stat={"RM 31.47"}
-          ></HighlightStats>
+          <EarmarkHighlightStats
+            highlight0={"Total Dealers"}
+            highlightTotal={earmarkDetailsSummary.totalAccounts}
+            highlight1={"Total Earmark Amt"}
+            highlight1Stat={earmarkDetailsSummary.totalEarmarkAmount}
+            highlight2={""}
+            highlight2Stat={""}
+            highlight3={""}
+            highlight3Stat={""}
+          ></EarmarkHighlightStats>
           {/* Highlight Stats */}
 
           {/* On Hold Section */}
@@ -355,21 +791,32 @@ export function EarmarkScreen() {
                   )}
                   columns={earmarksDetailsColumnHeader}
                   components={{ Toolbar: GridToolbar }}
-                  checkboxSelection
+                  // checkboxSelection
                   selecion
                   pageSize={pageSize}
                   rowCount={filteredRows.length}
                   pagination
                   onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  rowsPerPageOptions={[15, 30, 45, 60]} // Include 10 in the options
+                  autoHeight
+                  onRowClick={handleRowClick}
                 />
               </Box>
             ) : (
               NoDataFound()
             )}
           </Grid>
+          <AddEarmarkDialogInput open={open} onClose={handleClose} earmarkTimeline={earmarkTimelineDetails} />
+          <SaveAndRemoveEarmarkDialog
+            open={openSaveAndRemoveDialog}
+            onClose={handleCloseSaveAndRemoveEarmarkDialog}
+            onDialogButtonClick={requestUpdateEarMarkDetailsData}
+            onDialogRemoveButtonClick={requestDeleteEarMarkDetailsData}
+          />
 
           {earmarkDetails.length > 0 ? (
-            <Box>
+            <Box item mt={10}>
               <Typography>
                 <span>Jump to page: </span>
                 <select value={currentPage + 1} onChange={handlePageJump}>
@@ -390,14 +837,11 @@ export function EarmarkScreen() {
           {/* Action Buttons */}
 
           {earmarkDetails.length > 0 ? (
-            <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
+            <Grid item mt={1} justifyContent={"flex-start"} pb={3}>
               <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-               
-
                 <CustomButton
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
-                 
                   btnTxt={"ADD NEW"}
                   onClick={addNewEarmark}
                 ></CustomButton>
@@ -420,12 +864,9 @@ export function EarmarkScreen() {
           )}
           {/* Action Buttons */}
 
-
-         {/* activity list */}
-          <UserActivityInfo/>
-             {/* activity list */}
-                
-           
+          {/* activity list */}
+          <UserActivityInfo />
+          {/* activity list */}
         </Grid>
       </SnackbarProvider>
     </Box>

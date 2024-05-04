@@ -4,6 +4,7 @@ import {
   DARK_MODE,
   ERROR_CONTENT,
   ERROR_TITLE,
+  GET_DIALOG_DATA,
   GET_DIALOG_STATUS,
   GET_SESSION_ID_STATUS,
   GLOBAL_SEARCH,
@@ -23,6 +24,7 @@ export const sessionIdStatus = atomWithStorage(GET_SESSION_ID_STATUS, "");
 export const isAuthPageAtom = atomWithStorage(IS_AUTH_PAGE, true);
 export const collapseMenu = atomWithStorage(COLLAPSE_MENU, true);
 export const globalSearchText = atomWithStorage(GLOBAL_SEARCH, "");
+export const selectedItems = atomWithStorage(GET_DIALOG_DATA, {});
 
 //Api and network error message
 export const loadingStatus = atomWithStorage(PROGRESS_STATUS, true);

@@ -117,8 +117,8 @@ export function OnHoldAllTransactionsDetails() {
   // increase - decrease list layout height on available list itmes count
   function getDataGridHeight() {
     // Calculate the total height required for the grid
-    const headerHeight = 100; // Height of header row
-    const rowHeight = 100; // Height of each data row
+    const headerHeight = 150; // Height of header row
+    const rowHeight = 50; // Height of each data row
     const rowCount = totalNoOfRows; // Total number of data rows
     const totalHeight = headerHeight + rowCount * rowHeight;
 

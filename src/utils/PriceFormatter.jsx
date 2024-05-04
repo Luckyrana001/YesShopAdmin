@@ -9,7 +9,7 @@ function PriceFormatter({ price }) {
     return (
       <Box>
         <Typography sx={{ display: "inline-flex", marginRight: "3%" }}>
-          RM
+        <span style={{ fontSize: '11px' }}>RM</span>
         </Typography>
         {formattedPrice}
       </Box>

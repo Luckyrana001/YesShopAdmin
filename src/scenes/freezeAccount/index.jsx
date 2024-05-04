@@ -1,10 +1,9 @@
-import { Typography } from "@mui/material";
+import { Avatar, Typography } from "@mui/material";
 
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import { tokens } from "../../theme";
 import GreetingHeader from "../../components/GreetingHeader";
-import SectionHeader from "../../components/SectionHeader";
 import CustomButton from "../../components/CustomButton";
 import Grid from "@mui/material/Unstable_Grid2";
 import HighlightStats from "../../components/HighlightStats";
@@ -18,14 +17,15 @@ import { getFromLocalStorage } from "../../utils/localStorageUtils";
 import CustomProgressDialog from "../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../components/ErrorAlertDialog";
 import { useAtom } from "jotai";
+import * as CONSTANT from "../../constants/Constant";
+
 import {
   globalSearchText,
-  isAuthPageAtom,
+  selectedItems,
   showErrorAlertDialog,
 } from "../../config/AppConfig";
 import {
   ALERT,
-  ERROR_FOUND_DURING_API_CALL,
   ERROR_WHILE_FETCHING_DATA,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
@@ -35,15 +35,19 @@ import {
 import DebugLog from "../../utils/DebugLog";
 import {
   LOGIN_ID,
+  MESSAGE_KEY,
   SESSION_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
-import { generateRequestId } from "../../utils/RequestIdGenerator";
-import { getOnHoldSummary } from "../../services/ApiService";
+import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
+import { getAccountDetailsToAdd, getFreezeAccountList } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
-import { onHoldSummaryColumnHeader } from "../../components/ColumnHeader";
+import { earmarksDetailsColumnHeader, freezedAccountDetailsColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
-import { ApiErrorCode } from "../../services/ApiTags";
+import { ApiErrorCode, ApiType } from "../../services/ApiTags";
 import UserActivityInfo from "../../components/UserActivity";
+import { initializeEncryption } from "../../services/AesGcmEncryption";
+import AddEarmarkDialogInput from "../earmark/AddEarmarkDialog";
+import EarmarkHighlightStats from "../../components/EarmarkHighlightedStats";
 
 export function FreezeAccountScreen() {
   const theme = useTheme();
@@ -51,8 +55,8 @@ export function FreezeAccountScreen() {
   const navigate = useNavigate();
 
   const isNetworkConnectionAvailable = UseOnlineStatus();
+  const [selectedItem, setSelectedItem] = useAtom(selectedItems);
 
-  const [, setAuthStatus] = useAtom(isAuthPageAtom);
   const [getDialogStatus, setErrorDialog] = useAtom(showErrorAlertDialog);
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -60,34 +64,25 @@ export function FreezeAccountScreen() {
   const [content, setContent] = useState("");
   const [, setError] = useState("");
   const [getProgressbarText, setProgressbarText] = useState("");
+  const [totalFreezedAccount, setTotalFreezedAccount] = useState("");
+  const [accountDetailsToAdd, setAccountDetailsToAdd] = useState("");
 
-  const [onHoldSummary, setOnHoldSummary] = useState([]);
-  const [onHoldData, setOnHoldData] = useState([]);
+  const [allFreezeAccountDetails, setAllFreezeAccountDetails] = useState([]);
   const [gridHeight, setGridHeight] = useState(108); // Default height
   const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
-  const handlePageJump = (event) => {
-    setCurrentPage(parseInt(event.target.value, 10) - 1);
-  };
+  const [open, setOpen] = useState(false);
 
-  const filteredRows = onHoldSummary.filter((row) =>
-    Object.values(row).some((value) =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
-
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-  };
+ 
 
   // increase - decrease list layout height on available list itmes count
   function getDataGridHeight() {
     // Calculate the total height required for the grid
     const headerHeight = 100; // Height of header row
-    const rowHeight = 100; // Height of each data row
+    const rowHeight = 65; // Height of each data row
     const rowCount = totalNoOfRows; // Total number of data rows
     const totalHeight = headerHeight + rowCount * rowHeight;
 
@@ -95,54 +90,158 @@ export function FreezeAccountScreen() {
     setGridHeight(totalHeight);
   }
 
+  
+  useEffect(() => {
+    checkUserAuthExistOrNot();
+
+    getDataGridHeight();
+
+    getFreezeAccountDetailsData();
+
+    //getFreezeAccountDetailsToAdd();
+
+    showNoInternetSnackBar();
+
+    navigate(blockNavigation);
+  }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
+ 
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  // const handlePageSizeChange = (newPageSize) => {
+  //   // Here, you would fetch new data based on the new page size
+  //   // For the sake of this example, let's just set the page size
+  //   // without updating the data
+  //   console.log('Page size changed to:', newPageSize);
+  //   setPageSize(newPageSize)
+  //   getDataGridHeight()
+  // };
+
+
+ // increase - decrease list layout height on available list itmes count
+ function getDataGridHeight() {
+  // Calculate the total height required for the grid
+  const headerHeight = 100; // Height of header row
+  const rowHeight = 60; // Height of each data row
+  let rowCount = 0;
+  if(totalNoOfRows <= pageSize){
+    rowCount = totalNoOfRows; // Total number of data rows
+  }else{
+    rowCount = pageSize; // Total number of data rows
+  }
+  
+  const totalHeight = headerHeight + rowCount * rowHeight;
+
+  // Set the grid height
+  setGridHeight(totalHeight);
+}
+const handlePageSizeChange = (newPageSize) => {
+  // Here, you would fetch new data based on the new page size
+  // For the sake of this example, let's just set the page size
+  // without updating the data
+  console.log('Page size changed to:', newPageSize);
+  setPageSize(newPageSize)
+  getDataGridHeight()
+};
+  const handleClose = () => {
+    setOpen(false);
+    DebugLog("Dialog Closed")
+  };
+
+  const handlePageJump = (event) => {
+    setCurrentPage(parseInt(event.target.value, 10) - 1);
+  };
+
+  
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  function freezeUnfreezeAddDealer(){
+    navigate(CONSTANT.UNFREEZE_FREEZE_DEALER_ROUTE)
+   // setOpen(true);
+  }
   function checkUserAuthExistOrNot() {
     if (getFromLocalStorage(SESSION_ID) === "") {
       navigate("/");
       return;
     }
   }
+  const filteredRows = allFreezeAccountDetails.filter((row) =>
+  Object.values(row).some((value) =>
+    String(value).toLowerCase().includes(searchQuery.toLowerCase())
+  )
+);
+const handleRowClick = (params) => {
+  setSelectedItem(params.row);
+ 
+  //setOpenSaveAndRemoveDialog(true);
+  //alert("Back button is disabled.");
+}
 
-  useEffect(() => {
-    checkUserAuthExistOrNot();
 
-    getDataGridHeight();
+function getFreezeAccountDetailsToAdd() {
+  try {
+    if (isNetworkConnectionAvailable) {
+      setProgressbarText(LOADING_PLEASE_WAIT);
+      setLoading(true); 
 
-    requestOnHoldSummaryData();
+      const requestObject = {
+        // pageNumber: 0,
+        // pageSize: 100,
+        // sortBy:'name',
+        // sortOrder:'ASC',
+        accountCode: '',
+        vendorCode:'',
+        //accountName:'',
+        accountName:"Sanity PDC Testing"
+      };
 
-    showNoInternetSnackBar();
-
-    navigate(blockNavigation);
-  }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
-
-  function requestOnHoldSummaryData() {
-    try {
-      if (isNetworkConnectionAvailable) {
-        setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); // Hide the progress dialog
-
-        const requestData = {
+      initializeEncryption(
+        requestObject,
+        getFromLocalStorage(MESSAGE_KEY),
+        ApiType.GET_EARMARKS_DETAILS
+      ).then((encryptedContentData) => {
+        const onholdCompanyRequestData = {
           requestId: generateRequestId(),
           loginId: getFromLocalStorage(LOGIN_ID),
           sessionId: getFromLocalStorage(SESSION_ID),
-          //contentData: encryptedContentData,
+          contentData: encryptedContentData,
         };
 
-        getOnHoldSummary(requestData)
+        getAccountDetailsToAdd(onholdCompanyRequestData)
           .then((response) => {
-            setOnHoldSummary(response.data.result.onHoldSummaryList);
-            setTotalNoOfRows(response.data.result.onHoldSummaryList.length);
+            setAccountDetailsToAdd(response.data.result.totalFrozen)
+            // const contentData = response.data.result.freezeAccountDetails.content.map((row) => ({
+            //   ...row,
+            //   id: generateRandomId(),
+            // }));
+            //setAllFreezeAccountDetails(contentData);
+            //setTotalNoOfRows(response.data.result.freezeAccountDetails.content.length);
             setLoading(false);
           })
           .catch((error) => {
-            if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+            if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
               try {
-                navigate("/");
+                navigate(CONSTANT.LOGIN);
+              } catch (error) {
+                DebugLog("error " + error);
+              }
+            } else if (
+              error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+            ) {
+              try {
+                navigate(CONSTANT.FINANCE_DASHBOARD);
               } catch (error) {
                 DebugLog("error " + error);
               }
             } else {
               const message =
-                error.response != null ? error.displayErrorMessage : "Unknown";
+                error.response != null
+                  ? error.displayErrorMessage
+                  : "Unknown";
 
               if (message)
                 showErrorAlert(
@@ -151,6 +250,90 @@ export function FreezeAccountScreen() {
                 );
             }
           });
+      });
+    } else {
+      showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+    }
+  } catch (error) {
+    const message = error.response != null ? error.response : error.message;
+    showErrorAlert(
+      error.message,
+      ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+    );
+  }
+}
+
+
+
+
+
+
+
+  function getFreezeAccountDetailsData() {
+    try {
+      if (isNetworkConnectionAvailable) {
+        setProgressbarText(LOADING_PLEASE_WAIT);
+        setLoading(true); 
+
+        const requestObject = {
+          pageNumber: 0,
+          pageSize: 100,
+          sortBy:'name',
+          sortOrder:'ASC',
+        };
+
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const onholdCompanyRequestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          getFreezeAccountList(onholdCompanyRequestData)
+            .then((response) => {
+              setTotalFreezedAccount(response.data.result.totalFrozen)
+              const contentData = response.data.result.freezeAccountDetails.content.map((row) => ({
+                ...row,
+                id: generateRandomId(),
+              }));
+              setAllFreezeAccountDetails(contentData);
+              setTotalNoOfRows(response.data.result.freezeAccountDetails.content.length);
+              setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate(CONSTANT.LOGIN);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
       }
@@ -158,7 +341,7 @@ export function FreezeAccountScreen() {
       const message = error.response != null ? error.response : error.message;
       showErrorAlert(
         error.message,
-        ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
       );
     }
   }
@@ -175,7 +358,7 @@ export function FreezeAccountScreen() {
 
   function showErrorAlert(title, content) {
     try {
-      DebugLog("an error found====" + content);
+    
       setError();
       setLoading(false);
 
@@ -197,11 +380,14 @@ export function FreezeAccountScreen() {
       });
     }
   };
+
+  
   return (
     /* Main Container */
     <Box>
       <SnackbarProvider maxSnack={3}>
         <ConnectionStatus />
+        <AddEarmarkDialogInput open={open} onClose={handleClose} />
         <ShowErrorAlertDialog
           status={getDialogStatus}
           title={title}
@@ -225,21 +411,22 @@ export function FreezeAccountScreen() {
           {/* Greetings Header */}
           <Grid container>
             <Grid item>
-              <GreetingHeader name={"On Hold"}></GreetingHeader>
+              <GreetingHeader name={"Freeze Accounts"}></GreetingHeader>
             </Grid>
           </Grid>
           {/* Greetings Header */}
 
           {/* Highlight Stats */}
-          <HighlightStats
-            highlightTotal={"100,000"}
-            highlight1={"Dealers"}
-            highlight1Stat={"4"}
-            highlight2={"Device Reimburse"}
-            highlight2Stat={"RM 100"}
-            highlight3={"Incentives"}
-            highlight3Stat={"RM 31.47"}
-          ></HighlightStats>
+          <EarmarkHighlightStats
+           highlight0={"Total Frozen"}
+            highlightTotal={totalFreezedAccount}
+            highlight1={''}
+            highlight1Stat={""}
+            highlight2={""}
+            highlight2Stat={""}
+            highlight3={""}
+            highlight3Stat={""}
+          ></EarmarkHighlightStats>
           {/* Highlight Stats */}
 
           {/* On Hold Section */}
@@ -255,12 +442,12 @@ export function FreezeAccountScreen() {
             xl={12}
             pb={2}
           >
-            <SectionHeader
+            {/* <SectionHeader
               sectionIcon={"../../assets/common/onhold.svg"}
               sectionHeading={"On Hold"}
-            ></SectionHeader>
+            ></SectionHeader> */}
 
-            {onHoldSummary.length > 0 ? (
+            {allFreezeAccountDetails.length > 0 ? (
               <Box
                 borderRadius={3}
                 flex={1}
@@ -308,14 +495,18 @@ export function FreezeAccountScreen() {
                     currentPage * pageSize,
                     (currentPage + 1) * pageSize
                   )}
-                  columns={onHoldSummaryColumnHeader}
+                  columns={freezedAccountDetailsColumnHeader}
                   components={{ Toolbar: GridToolbar }}
-                  checkboxSelection
+                 //checkboxSelection
                   selecion
                   pageSize={pageSize}
                   rowCount={filteredRows.length}
                   pagination
                   onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  rowsPerPageOptions={[15, 30, 45, 60]} // Include 10 in the options
+                  autoHeight
+                  onRowClick={handleRowClick}
                 />
               </Box>
             ) : (
@@ -323,8 +514,8 @@ export function FreezeAccountScreen() {
             )}
           </Grid>
 
-          {onHoldSummary.length > 0 ? (
-            <Box>
+          {allFreezeAccountDetails.length > 0 ? (
+            <Box mt={1}>
               <Typography>
                 <span>Jump to page: </span>
                 <select value={currentPage + 1} onChange={handlePageJump}>
@@ -344,25 +535,17 @@ export function FreezeAccountScreen() {
 
           {/* Action Buttons */}
 
-          {onHoldSummary.length > 0 ? (
-            <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
+          {allFreezeAccountDetails.length > 0 ? (
+            <Grid item mt={1} justifyContent={"flex-start"} pb={5}>
               <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-                <CustomButton
-                  btnBG={colors.grey[900]}
-                  btnColor={colors.grey[100]}
-                  btnStartIcon={
-                    <img src="../../assets/common/Cross.svg" width={22} />
-                  }
-                  btnTxt={"Cancel"}
-                ></CustomButton>
+               
 
                 <CustomButton
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
-                  btnStartIcon={
-                    <img src="../../assets/common/Tick.svg" width={22} />
-                  }
-                  btnTxt={"Release"}
+                 
+                  btnTxt={"ADD NEW"}
+                  onClick={freezeUnfreezeAddDealer}
                 ></CustomButton>
 
                 <CustomButton
@@ -383,9 +566,12 @@ export function FreezeAccountScreen() {
           )}
           {/* Action Buttons */}
 
-            {/* activity list */}
-            <UserActivityInfo/>
+
+         {/* activity list */}
+          <UserActivityInfo/>
              {/* activity list */}
+                
+           
         </Grid>
       </SnackbarProvider>
     </Box>

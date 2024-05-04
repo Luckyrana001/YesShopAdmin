@@ -18,7 +18,7 @@ export const CREDIT_DEBIT = "Credit Debit";
 export const ADJUSTMENT = "Adjustment";
 export const EARMARK = "Earkmark";
 
-export const WITHOLDING_TAX = "Witholding Tax";
+export const WITHOLDING_TAX = "Withholding Tax";
 export const MANAGE_TEAM = "Manage Team";
 export const CONTACT_INFORMATIONS = "Contact Informations";
 

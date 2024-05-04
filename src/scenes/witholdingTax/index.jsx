@@ -35,6 +35,7 @@ import {
 import DebugLog from "../../utils/DebugLog";
 import {
   LOGIN_ID,
+  MESSAGE_KEY,
   SESSION_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
 import {
@@ -42,6 +43,7 @@ import {
   generateRequestId,
 } from "../../utils/RequestIdGenerator";
 import {
+  getCreditDebitDetails,
   getOnHoldSummary,
   getWitholdingTaxDetails,
 } from "../../services/ApiService";
@@ -51,7 +53,9 @@ import {
   withholdingTaxColumnHeader,
 } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
-import { ApiErrorCode } from "../../services/ApiTags";
+import { ApiErrorCode, ApiType } from "../../services/ApiTags";
+import * as CONSTANT from "../../constants/Constant";
+import { initializeEncryption } from "../../services/AesGcmEncryption";
 
 export function WitholdingTaxScreen() {
   const theme = useTheme();
@@ -126,44 +130,64 @@ export function WitholdingTaxScreen() {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); // Hide the progress dialog
+        setLoading(true); 
 
-        const requestData = {
-          requestId: generateRequestId(),
-          loginId: getFromLocalStorage(LOGIN_ID),
-          sessionId: getFromLocalStorage(SESSION_ID),
-          //contentData: encryptedContentData,
+        const requestObject = {
+          pageNumber: 0,
+          pageSize: 10,
         };
 
-        getWitholdingTaxDetails(requestData)
-          .then((response) => {
-            // Map through the original data and assign random IDs to rows
-            const rowsWithIds = response.data.result.withholdingTaxDetails.map(
-              (row) => ({ ...row, id: generateRandomId() })
-            );
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_WITHHOLDING_DETAILS
+        ).then((encryptedContentData) => {
+          const onholdCompanyRequestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
 
-            setWitholdingTaxDetails(rowsWithIds);
-            setTotalNoOfRows(response.data.result.withholdingTaxDetails.length);
-            setLoading(false);
-          })
-          .catch((error) => {
-            if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
-              try {
-                navigate("/");
-              } catch (error) {
-                DebugLog("error " + error);
+          getWitholdingTaxDetails(onholdCompanyRequestData)
+            .then((response) => {
+              const contentData = response.data.result.earmarkDetails.content.map((row) => ({
+                ...row,
+                id: generateRandomId(),
+              }));
+              setWitholdingTaxDetails(contentData);
+              setTotalNoOfRows(response.data.result.earmarkDetails.content.length);
+              setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
               }
-            } else {
-              const message =
-                error.response != null ? error.displayErrorMessage : "Unknown";
-
-              if (message)
-                showErrorAlert(
-                  error.message,
-                  ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
-                );
-            }
-          });
+            });
+        });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
       }
@@ -171,7 +195,7 @@ export function WitholdingTaxScreen() {
       const message = error.response != null ? error.response : error.message;
       showErrorAlert(
         error.message,
-        ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
       );
     }
   }

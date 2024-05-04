@@ -5,7 +5,7 @@ import { APPLICATION_JSON } from "../constants/Constant";
 const baseUrl = config.apiBaseUrl;
 
 export const axiosInstance = axios.create({
-  //baseURL: "https://cors-anywhere.herokuapp.com/" + baseUrl, // proxy server path attached TO BYPASS CORS
+ // baseURL: "https://cors-anywhere.herokuapp.com/" + baseUrl, // proxy server path attached TO BYPASS CORS
   baseURL: baseUrl, // IF API DO NOT HAVE CORS ISSUE
   timeout: 20000,
   headers: {

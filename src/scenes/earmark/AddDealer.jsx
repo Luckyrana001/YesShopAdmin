@@ -1,13 +1,9 @@
-import { Typography } from "@mui/material";
-
-import { initializeEncryption } from "../../services/AesGcmEncryption";
-import * as CONSTANT from "../../constants/Constant";
+import { Avatar, IconButton, Typography } from "@mui/material";
 
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import { tokens } from "../../theme";
 import GreetingHeader from "../../components/GreetingHeader";
-import SectionHeader from "../../components/SectionHeader";
 import CustomButton from "../../components/CustomButton";
 import Grid from "@mui/material/Unstable_Grid2";
 import HighlightStats from "../../components/HighlightStats";
@@ -17,21 +13,18 @@ import { useEffect, useState } from "react";
 import ConnectionStatus from "../../utils/ConnectionStatus";
 import { SnackbarProvider, useSnackbar } from "notistack";
 import UseOnlineStatus from "../../utils/UseOnlineStatus";
-import {
-  getFromLocalStorage,
-  saveToLocalStorageJsonObject,
-} from "../../utils/localStorageUtils";
+import { getFromLocalStorage } from "../../utils/localStorageUtils";
 import CustomProgressDialog from "../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../components/ErrorAlertDialog";
 import { useAtom } from "jotai";
+import * as CONSTANT from "../../constants/Constant";
+
 import {
   globalSearchText,
-  isAuthPageAtom,
   showErrorAlertDialog,
 } from "../../config/AppConfig";
 import {
   ALERT,
-  ERROR_FOUND_DURING_API_CALL,
   ERROR_WHILE_FETCHING_DATA,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
@@ -42,32 +35,25 @@ import DebugLog from "../../utils/DebugLog";
 import {
   LOGIN_ID,
   MESSAGE_KEY,
-  NAV_ONHOLD_DETAILS,
   SESSION_ID,
-  USER_ROLE,
 } from "../../constants/LocalStorageKeyValuePairString";
-import {
-  generateRandomId,
-  generateRequestId,
-} from "../../utils/RequestIdGenerator";
-import { getOnHoldCompany, getOnHoldSummary } from "../../services/ApiService";
+import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
+import { getEarMarkDetails } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
-import {
-  onHoldCompanyColumnHeader,
-  onHoldSummaryColumnHeader,
-} from "../../components/ColumnHeader";
+import { earmarksDetailsColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
 import { ApiErrorCode, ApiType } from "../../services/ApiTags";
+import UserActivityInfo from "../../components/UserActivity";
+import { initializeEncryption } from "../../services/AesGcmEncryption";
+import AddEarmarkDialogInput from "./AddEarmarkDialog";
 
-export function OnHoldSummary() {
+export function AddDealerScreen() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
-  const [userRole, setUserRole] = useState([]);
 
   const isNetworkConnectionAvailable = UseOnlineStatus();
 
-  const [, setAuthStatus] = useAtom(isAuthPageAtom);
   const [getDialogStatus, setErrorDialog] = useAtom(showErrorAlertDialog);
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -76,95 +62,81 @@ export function OnHoldSummary() {
   const [, setError] = useState("");
   const [getProgressbarText, setProgressbarText] = useState("");
 
-  const [onHoldSummary, setOnHoldSummary] = useState([]);
-  const [onHoldData, setOnHoldData] = useState([]);
-  const [gridHeight, setGridHeight] = useState(500); // Default height
+  const [earmarkDetails, setearmarkDetails] = useState([]);
+  const [gridHeight, setGridHeight] = useState(108); // Default height
   const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
-  const [selectedRows, setSelectedRows] = React.useState([]);
-  const [nbRows, setNbRows] = React.useState(3);
+
+  const [open, setOpen] = useState(false);
+
+ 
 
   // increase - decrease list layout height on available list itmes count
   function getDataGridHeight() {
     // Calculate the total height required for the grid
-    const headerHeight = 60; // Height of header row
-    const rowHeight = 60; // Height of each data row
-    let rowCount = 0;
-    if(totalNoOfRows <= pageSize){
-      rowCount = totalNoOfRows; // Total number of data rows
-    }else{
-      rowCount = pageSize; // Total number of data rows
-    }
-    
+    const headerHeight = 100; // Height of header row
+    const rowHeight = 100; // Height of each data row
+    const rowCount = totalNoOfRows; // Total number of data rows
     const totalHeight = headerHeight + rowCount * rowHeight;
 
     // Set the grid height
     setGridHeight(totalHeight);
   }
 
-
+  
   useEffect(() => {
-    getUserRole();
+    checkUserAuthExistOrNot();
 
     getDataGridHeight();
 
-    requestOnHoldCompanyData();
+    requestEarMarkDetailsData();
 
     showNoInternetSnackBar();
 
     navigate(blockNavigation);
   }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
+ 
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    DebugLog("Dialog Closed")
+  };
 
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
   };
 
-  const filteredRows = onHoldSummary.filter((row) =>
-    Object.values(row).some((value) =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+  
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
 
-  function getUserRole() {
-    setUserRole(getFromLocalStorage(USER_ROLE));
+  function addNewEarmark(){
+    setOpen(true);
   }
+  function checkUserAuthExistOrNot() {
+    if (getFromLocalStorage(SESSION_ID) === "") {
+      navigate("/");
+      return;
+    }
+  }
+  const filteredRows = earmarkDetails.filter((row) =>
+  Object.values(row).some((value) =>
+    String(value).toLowerCase().includes(searchQuery.toLowerCase())
+  )
+);
 
-  const handleSelectionChange = (newSelection) => {
-    setSelectedRows(newSelection);
-  };
-
-  const resetSelection = () => {
-    setSelectedRows([]);
-  };
-  const handleRowClick = (params) => {
-    //{"companyCode":"A0002","pageNumber":0,"endDate":"2023-07-31","pageSize":100,"startDate":"2023-07-01"}
-
-    const pageNumber = 0;
-    const pageSize = 100;
-    const onHoldRowSelected = {
-      companyCode: params.row.companyCode,
-      startDate: params.row.startDate,
-      endDate: params.row.endDate,
-      pageNumber: pageNumber,
-      pageSize: pageSize,
-      companyName: params.row.companyName,
-    };
-
-    DebugLog("onHoldRowSelected  " + JSON.stringify(onHoldRowSelected));
-    saveToLocalStorageJsonObject(NAV_ONHOLD_DETAILS, onHoldRowSelected);
-    navigate(CONSTANT.ON_HOLD_DETAILS_ROUTE);
-  };
-
-  function requestOnHoldCompanyData() {
+  function requestEarMarkDetailsData() {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); // Hide the progress dialog
+        setLoading(true); 
 
         const requestObject = {
           pageNumber: 0,
@@ -174,7 +146,7 @@ export function OnHoldSummary() {
         initializeEncryption(
           requestObject,
           getFromLocalStorage(MESSAGE_KEY),
-          ApiType.ON_HOLD_COMPANY_DETAILS
+          ApiType.GET_EARMARKS_DETAILS
         ).then((encryptedContentData) => {
           const onholdCompanyRequestData = {
             requestId: generateRequestId(),
@@ -183,14 +155,14 @@ export function OnHoldSummary() {
             contentData: encryptedContentData,
           };
 
-          getOnHoldCompany(onholdCompanyRequestData)
+          getEarMarkDetails(onholdCompanyRequestData)
             .then((response) => {
-              const contentData = response.data.result.content.map((row) => ({
+              const contentData = response.data.result.earmarkDetails.content.map((row) => ({
                 ...row,
                 id: generateRandomId(),
               }));
-              setOnHoldSummary(contentData);
-              setTotalNoOfRows(response.data.result.content.length);
+              setearmarkDetails(contentData);
+              setTotalNoOfRows(response.data.result.earmarkDetails.content.length);
               setLoading(false);
             })
             .catch((error) => {
@@ -234,93 +206,6 @@ export function OnHoldSummary() {
     }
   }
 
-  function requestOnHoldSummaryData() {
-    try {
-      if (isNetworkConnectionAvailable) {
-        setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); // Hide the progress dialog
-        //{"pageNumber":0,"pageSize":100}
-        const requestData = {
-          pageNumber: 0,
-          pageSize: 100,
-          // requestId: generateRequestId(),
-          // loginId: getFromLocalStorage(LOGIN_ID),
-          sessionId: getFromLocalStorage(SESSION_ID),
-          //contentData: encryptedContentData,
-        };
-
-        getOnHoldCompany(requestData)
-          .then((response) => {
-            setOnHoldSummary(response.data.result.onHoldSummaryList);
-            setTotalNoOfRows(response.data.result.onHoldSummaryList.length);
-            setLoading(false);
-          })
-          .catch((error) => {
-            if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
-              try {
-                navigate("/");
-              } catch (error) {
-                DebugLog("error " + error);
-              }
-            } else {
-              const message =
-                error.response != null ? error.displayErrorMessage : "Unknown";
-
-              if (message)
-                showErrorAlert(
-                  error.message,
-                  ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
-                );
-            }
-          });
-      } else {
-        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
-      }
-    } catch (error) {
-      const message = error.response != null ? error.response : error.message;
-      showErrorAlert(
-        error.message,
-        ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
-      );
-    }
-  }
-
-  const cancelHold = () => {
-    const selectedData = onHoldSummary.filter((row) =>
-      selectedRows.includes(row.id)
-    );
-    console.log("Selected rows data:", selectedData);
-
-    if (selectedData.length > 0) {
-      //   //const navData = getFromLocalStorageJsonObject(NAV_PAYOUT_DETAIL_DATA)
-      //   DebugLog("nav Daat======="+JSON.stringify(navData))
-
-      //   const extractCompanyCode = selectedData.map(row => row.companyCode);
-
-      //  const  onHoldSelectedRowData = {
-
-      //     companyCode : extractCompanyCode,
-      //     cutOffDate: navData.cutOffDate,
-      //     payoutCycle: navData.payoutCycle,
-      //     payoutStatus: navData.payoutStatus,
-      //     payoutByDate:navData.payoutDate
-      //   };
-
-      //   DebugLog("onHoldSelectedRowData  Daat======="+JSON.stringify(onHoldSelectedRowData))
-      //   //requestPayoutOnHold(onHoldSelectedRowData)
-
-      showErrorAlert("", "COMING SOON!");
-
-      resetSelection();
-    } else {
-      showErrorAlert("Alert", "Please choose some rows first!");
-    }
-  };
-
-  const startDownload = () => {
-    showErrorAlert("", "COMING SOON!");
-    resetSelection();
-  };
   function blockNavigation(location, action) {
     // Block navigation if action is "pop", which indicates back/forward button press
     if (action === "pop") {
@@ -330,17 +215,10 @@ export function OnHoldSummary() {
     }
     return true; // Allow navigation for other actions like "push" or "replace"
   }
-  const handlePageSizeChange = (newPageSize) => {
-    // Here, you would fetch new data based on the new page size
-    // For the sake of this example, let's just set the page size
-    // without updating the data
-    console.log('Page size changed to:', newPageSize);
-    setPageSize(newPageSize)
-    getDataGridHeight()
-  };
+
   function showErrorAlert(title, content) {
     try {
-      DebugLog("an error found====" + content);
+    
       setError();
       setLoading(false);
 
@@ -362,11 +240,14 @@ export function OnHoldSummary() {
       });
     }
   };
+
+  
   return (
     /* Main Container */
     <Box>
       <SnackbarProvider maxSnack={3}>
         <ConnectionStatus />
+        <AddEarmarkDialogInput open={open} onClose={handleClose} />
         <ShowErrorAlertDialog
           status={getDialogStatus}
           title={title}
@@ -387,16 +268,40 @@ export function OnHoldSummary() {
             borderRadius: "18px",
           }}
         >
-          {/* Greetings Header */}
-          <Grid container>
-            <Grid item>
-              <GreetingHeader name={"On Hold"}></GreetingHeader>
-            </Grid>
+
+ {/* Header */}
+ <Grid container direction={"row"} alignItems={"center"} mb={2} ml={2}>
+          <Grid item mr={2}>
+            <IconButton href={CONSTANT.EARMARK_ROUTE} width={12}>
+              <img src={"../../assets/common/Back.svg"} width={12} />
+            </IconButton>
           </Grid>
+          <Grid item>
+            <Typography
+              color={colors.grey[100]}
+              fontWeight={"600"}
+              variant="h3"
+            >
+              {
+                "Add Dealer"
+              }
+            </Typography>
+          </Grid>
+        </Grid>
+        {/* Header */}
+
+
+
+          {/* Greetings Header */}
+          {/* <Grid container>
+            <Grid item>
+              <GreetingHeader name={"Add Dealer"}></GreetingHeader>
+            </Grid>
+          </Grid> */}
           {/* Greetings Header */}
 
           {/* Highlight Stats */}
-          <HighlightStats
+          {/* <HighlightStats
             highlightTotal={"100,000"}
             highlight1={"Dealers"}
             highlight1Stat={"4"}
@@ -404,7 +309,7 @@ export function OnHoldSummary() {
             highlight2Stat={"RM 100"}
             highlight3={"Incentives"}
             highlight3Stat={"RM 31.47"}
-          ></HighlightStats>
+          ></HighlightStats> */}
           {/* Highlight Stats */}
 
           {/* On Hold Section */}
@@ -418,19 +323,19 @@ export function OnHoldSummary() {
             md={12}
             lg={12}
             xl={12}
-            pb={1}
+            pb={2}
           >
-            <SectionHeader
+            {/* <SectionHeader
               sectionIcon={"../../assets/common/onhold.svg"}
               sectionHeading={"On Hold"}
-            ></SectionHeader>
+            ></SectionHeader> */}
 
-            {onHoldSummary.length > 0 ? (
+            {earmarkDetails.length > 0 ? (
               <Box
                 borderRadius={3}
                 flex={1}
                 m="0px 0 0 0"
-             
+                pb={0}
                 height={gridHeight}
                 sx={{
                   "& .MuiDataGrid-root": {
@@ -473,21 +378,14 @@ export function OnHoldSummary() {
                     currentPage * pageSize,
                     (currentPage + 1) * pageSize
                   )}
-                  columns={onHoldCompanyColumnHeader}
+                  columns={earmarksDetailsColumnHeader}
                   components={{ Toolbar: GridToolbar }}
                   checkboxSelection
-                  selectionModel={selectedRows}
-                  onSelectionModelChange={handleSelectionChange}
-                  onPageChange={handlePageChange}
+                  selecion
                   pageSize={pageSize}
                   rowCount={filteredRows.length}
                   pagination
-                  disableSelectionOnClick // Disable row selection on row click
-                  onRowClick={handleRowClick}
-                  onPageSizeChange={handlePageSizeChange}
-                  rowsPerPageOptions={[15, 30, 45, 60]} // Include 10 in the options
-                  autoHeight
-                  //rows={filteredRows.slice(0, nbRows)}
+                  onPageChange={handlePageChange}
                 />
               </Box>
             ) : (
@@ -495,7 +393,7 @@ export function OnHoldSummary() {
             )}
           </Grid>
 
-          {onHoldSummary.length > 0 ? (
+          {earmarkDetails.length > 0 ? (
             <Box>
               <Typography>
                 <span>Jump to page: </span>
@@ -516,48 +414,19 @@ export function OnHoldSummary() {
 
           {/* Action Buttons */}
 
-          {onHoldSummary.length > 0 ? (
-            <Grid item justifyContent={"flex-start"} pb={10}>
+          {earmarkDetails.length > 0 ? (
+            <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
               <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-                {userRole === "Biz Ops" ? (
-                  <CustomButton
-                    btnBG={colors.grey[900]}
-                    btnColor={colors.grey[100]}
-                    btnStartIcon={
-                      <img src="../../assets/common/Cross.svg" width={22} />
-                    }
-                    btnTxt={"Request Release"}
-                    onClick={cancelHold}
-                  ></CustomButton>
-                ) : (
-                  ""
-                )}
-                {userRole === "Biz Ops Head" ? (
-                  <CustomButton
-                    btnBG={colors.grey[900]}
-                    btnColor={colors.grey[100]}
-                    btnStartIcon={
-                      <img src="../../assets/common/Cross.svg" width={22} />
-                    }
-                    btnTxt={"Cancel"}
-                    onClick={cancelHold}
-                  ></CustomButton>
-                ) : (
-                  ""
-                )}
-                {userRole === "Biz Ops Head" ? (
-                  <CustomButton
-                    btnBG={colors.grey[900]}
-                    btnColor={colors.grey[100]}
-                    btnStartIcon={
-                      <img src="../../assets/common/Tick.svg" width={22} />
-                    }
-                    btnTxt={"Release"}
-                    onClick={startDownload}
-                  ></CustomButton>
-                ) : (
-                  ""
-                )}
+               
+
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                 
+                  btnTxt={"ADD NEW"}
+                  onClick={addNewEarmark}
+                ></CustomButton>
+
                 <CustomButton
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
@@ -568,7 +437,6 @@ export function OnHoldSummary() {
                     <img src="../../assets/common/Arrow-down.svg" height={8} />
                   }
                   btnTxt={"Download"}
-                  onClick={startDownload}
                 ></CustomButton>
               </Stack>
             </Grid>
@@ -576,6 +444,13 @@ export function OnHoldSummary() {
             ""
           )}
           {/* Action Buttons */}
+
+
+         {/* activity list */}
+          <UserActivityInfo/>
+             {/* activity list */}
+                
+           
         </Grid>
       </SnackbarProvider>
     </Box>

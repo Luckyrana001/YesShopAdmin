@@ -22,6 +22,8 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import { SidebarContext } from "../../scenes/global/context/sidebarContext.jsx";
 import DebugLog from "../../utils/DebugLog";
 import { iconsImgs } from "../../utils/images/images.js";
+import { SESSION_ID } from "../../constants/LocalStorageKeyValuePairString.jsx";
+import { getFromLocalStorage } from "../../utils/localStorageUtils.js";
 
 const Topbar = () => {
   const theme = useTheme();
@@ -35,8 +37,10 @@ const Topbar = () => {
   const navigate = useNavigate();
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
+  
 
   useEffect(() => {
+    checkUserAuthExistOrNot()
     const handleResize = () => {
       setIsSmallScreen(window.innerWidth <= 600); // Adjust the width threshold as needed
 
@@ -58,7 +62,13 @@ const Topbar = () => {
       window.removeEventListener("resize", handleResize);
     };
   }, [isSmallScreen]); // Empty dependency array ensures that this effect runs only once on component mount
-
+  
+  function checkUserAuthExistOrNot() {
+    if (getFromLocalStorage(SESSION_ID) === "") {
+      navigate("/");
+      return;
+    }
+  }
   function goToLoginPage() {
     setAuthStatus(true);
     navigate("/");

@@ -1,10 +1,9 @@
-import { Typography } from "@mui/material";
+import { Avatar, Typography } from "@mui/material";
 
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import { tokens } from "../../theme";
 import GreetingHeader from "../../components/GreetingHeader";
-import SectionHeader from "../../components/SectionHeader";
 import CustomButton from "../../components/CustomButton";
 import Grid from "@mui/material/Unstable_Grid2";
 import HighlightStats from "../../components/HighlightStats";
@@ -18,14 +17,14 @@ import { getFromLocalStorage } from "../../utils/localStorageUtils";
 import CustomProgressDialog from "../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../components/ErrorAlertDialog";
 import { useAtom } from "jotai";
+import * as CONSTANT from "../../constants/Constant";
+
 import {
   globalSearchText,
-  isAuthPageAtom,
   showErrorAlertDialog,
 } from "../../config/AppConfig";
 import {
   ALERT,
-  ERROR_FOUND_DURING_API_CALL,
   ERROR_WHILE_FETCHING_DATA,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
@@ -35,15 +34,19 @@ import {
 import DebugLog from "../../utils/DebugLog";
 import {
   LOGIN_ID,
+  MESSAGE_KEY,
   SESSION_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
-import { generateRequestId } from "../../utils/RequestIdGenerator";
-import { getOnHoldSummary } from "../../services/ApiService";
+import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
+import { getCreditDebitDetails, getEarMarkDetails } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
-import { onHoldSummaryColumnHeader } from "../../components/ColumnHeader";
+import { debitCreditAccountDetailsColumnHeader, earmarksDetailsColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
-import { ApiErrorCode } from "../../services/ApiTags";
+import { ApiErrorCode, ApiType } from "../../services/ApiTags";
 import UserActivityInfo from "../../components/UserActivity";
+import { initializeEncryption } from "../../services/AesGcmEncryption";
+import AddEarmarkDialogInput from "../earmark/AddEarmarkDialog";
+import EarmarkHighlightStats from "../../components/EarmarkHighlightedStats";
 
 export function CreditDebitScreen() {
   const theme = useTheme();
@@ -51,8 +54,9 @@ export function CreditDebitScreen() {
   const navigate = useNavigate();
 
   const isNetworkConnectionAvailable = UseOnlineStatus();
+  const [totalCreditAccount, setTotalCreditAccount] = useState("");
+  const [totalDebitAccount, setTotalDebitAccount] = useState("");
 
-  const [, setAuthStatus] = useAtom(isAuthPageAtom);
   const [getDialogStatus, setErrorDialog] = useAtom(showErrorAlertDialog);
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -61,96 +65,161 @@ export function CreditDebitScreen() {
   const [, setError] = useState("");
   const [getProgressbarText, setProgressbarText] = useState("");
 
-  const [onHoldSummary, setOnHoldSummary] = useState([]);
-  const [onHoldData, setOnHoldData] = useState([]);
-  const [gridHeight, setGridHeight] = useState(108); // Default height
+  const [earmarkDetails, setearmarkDetails] = useState([]);
+  // const [gridHeight, setGridHeight] = useState(108); // Default height
+  // const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
+  // const [pageSize, setPageSize] = useState(25);
+  // const [currentPage, setCurrentPage] = useState(0);
+  // const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
+
+  const [open, setOpen] = useState(false);
+  const [gridHeight, setGridHeight] = useState(500); // Default height
   const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
+  const [selectedRows, setSelectedRows] = React.useState([]);
+ 
+ // increase - decrease list layout height on available list itmes count
+ function getDataGridHeight() {
+  // Calculate the total height required for the grid
+  const headerHeight = 10; // Height of header row
+  const rowHeight = 60; // Height of each data row
+  let rowCount = 0;
+  if(totalNoOfRows <= pageSize){
+    rowCount = totalNoOfRows; // Total number of data rows
+  }else{
+    rowCount = pageSize; // Total number of data rows
+  }
+  
+  const totalHeight = headerHeight + rowCount * rowHeight;
+
+  // Set the grid height
+  setGridHeight(totalHeight);
+}
+
+
+  
+  useEffect(() => {
+    checkUserAuthExistOrNot();
+
+    getDataGridHeight();
+
+    requestCreditDebitDetailsData();
+
+    showNoInternetSnackBar();
+
+    navigate(blockNavigation);
+  }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
+ 
+  const handlePageSizeChange = (newPageSize) => {
+    // Here, you would fetch new data based on the new page size
+    // For the sake of this example, let's just set the page size
+    // without updating the data
+    console.log('Page size changed to:', newPageSize);
+    setPageSize(newPageSize)
+    getDataGridHeight()
+  };
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    DebugLog("Dialog Closed")
+  };
 
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
   };
 
-  const filteredRows = onHoldSummary.filter((row) =>
-    Object.values(row).some((value) =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+  
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
 
-  // increase - decrease list layout height on available list itmes count
-  function getDataGridHeight() {
-    // Calculate the total height required for the grid
-    const headerHeight = 100; // Height of header row
-    const rowHeight = 100; // Height of each data row
-    const rowCount = totalNoOfRows; // Total number of data rows
-    const totalHeight = headerHeight + rowCount * rowHeight;
-
-    // Set the grid height
-    setGridHeight(totalHeight);
+  function addNewEarmark(){
+    navigate(CONSTANT.ADD_DEALER_ROUTE)
+   // setOpen(true);
   }
-
   function checkUserAuthExistOrNot() {
     if (getFromLocalStorage(SESSION_ID) === "") {
       navigate("/");
       return;
     }
   }
+  const filteredRows = earmarkDetails.filter((row) =>
+  Object.values(row).some((value) =>
+    String(value).toLowerCase().includes(searchQuery.toLowerCase())
+  )
+);
 
-  useEffect(() => {
-    checkUserAuthExistOrNot();
-
-    getDataGridHeight();
-
-    requestOnHoldSummaryData();
-
-    showNoInternetSnackBar();
-
-    navigate(blockNavigation);
-  }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
-
-  function requestOnHoldSummaryData() {
+  function requestCreditDebitDetailsData() {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); // Hide the progress dialog
+        setLoading(true); 
 
-        const requestData = {
-          requestId: generateRequestId(),
-          loginId: getFromLocalStorage(LOGIN_ID),
-          sessionId: getFromLocalStorage(SESSION_ID),
-          //contentData: encryptedContentData,
+        const requestObject = {
+          pageNumber: 0,
+          pageSize: 100,
         };
 
-        getOnHoldSummary(requestData)
-          .then((response) => {
-            setOnHoldSummary(response.data.result.onHoldSummaryList);
-            setTotalNoOfRows(response.data.result.onHoldSummaryList.length);
-            setLoading(false);
-          })
-          .catch((error) => {
-            if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
-              try {
-                navigate("/");
-              } catch (error) {
-                DebugLog("error " + error);
-              }
-            } else {
-              const message =
-                error.response != null ? error.displayErrorMessage : "Unknown";
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const onholdCompanyRequestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
 
-              if (message)
-                showErrorAlert(
-                  error.message,
-                  ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
-                );
-            }
-          });
+          getCreditDebitDetails(onholdCompanyRequestData)
+            .then((response) => {
+              // const contentData = response.data.result.debitCreditDetails.content.map((row) => ({
+              //   ...row,
+              //   id: generateRandomId(),
+              // }));
+              setTotalCreditAccount(response.data.result.totalCredit)
+              setTotalDebitAccount(response.data.result.totalDebit)
+
+              setearmarkDetails(response.data.result.debitCreditDetails.content);
+              setTotalNoOfRows(response.data.result.debitCreditDetails.content.length);
+              setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
       } else {
         showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
       }
@@ -158,7 +227,7 @@ export function CreditDebitScreen() {
       const message = error.response != null ? error.response : error.message;
       showErrorAlert(
         error.message,
-        ERROR_FOUND_DURING_API_CALL + JSON.stringify(message)
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
       );
     }
   }
@@ -175,7 +244,7 @@ export function CreditDebitScreen() {
 
   function showErrorAlert(title, content) {
     try {
-      DebugLog("an error found====" + content);
+    
       setError();
       setLoading(false);
 
@@ -197,11 +266,14 @@ export function CreditDebitScreen() {
       });
     }
   };
+
+  
   return (
     /* Main Container */
     <Box>
       <SnackbarProvider maxSnack={3}>
         <ConnectionStatus />
+        <AddEarmarkDialogInput open={open} onClose={handleClose} />
         <ShowErrorAlertDialog
           status={getDialogStatus}
           title={title}
@@ -225,21 +297,22 @@ export function CreditDebitScreen() {
           {/* Greetings Header */}
           <Grid container>
             <Grid item>
-              <GreetingHeader name={"On Hold"}></GreetingHeader>
+              <GreetingHeader name={"Debit / Credit"}></GreetingHeader>
             </Grid>
           </Grid>
           {/* Greetings Header */}
 
           {/* Highlight Stats */}
-          <HighlightStats
-            highlightTotal={"100,000"}
-            highlight1={"Dealers"}
-            highlight1Stat={"4"}
-            highlight2={"Device Reimburse"}
-            highlight2Stat={"RM 100"}
-            highlight3={"Incentives"}
-            highlight3Stat={"RM 31.47"}
-          ></HighlightStats>
+          <EarmarkHighlightStats
+           highlight0={"Total Credit"}
+            highlightTotal={"RM "+totalCreditAccount}
+            highlight1={'Total Debit'}
+            highlight1Stat={"RM "+totalDebitAccount}
+            highlight2={""}
+            highlight2Stat={""}
+            highlight3={""}
+            highlight3Stat={""}
+          ></EarmarkHighlightStats>
           {/* Highlight Stats */}
 
           {/* On Hold Section */}
@@ -255,12 +328,12 @@ export function CreditDebitScreen() {
             xl={12}
             pb={2}
           >
-            <SectionHeader
+            {/* <SectionHeader
               sectionIcon={"../../assets/common/onhold.svg"}
               sectionHeading={"On Hold"}
-            ></SectionHeader>
+            ></SectionHeader> */}
 
-            {onHoldSummary.length > 0 ? (
+            {earmarkDetails.length > 0 ? (
               <Box
                 borderRadius={3}
                 flex={1}
@@ -308,7 +381,7 @@ export function CreditDebitScreen() {
                     currentPage * pageSize,
                     (currentPage + 1) * pageSize
                   )}
-                  columns={onHoldSummaryColumnHeader}
+                  columns={debitCreditAccountDetailsColumnHeader}
                   components={{ Toolbar: GridToolbar }}
                   checkboxSelection
                   selecion
@@ -316,6 +389,9 @@ export function CreditDebitScreen() {
                   rowCount={filteredRows.length}
                   pagination
                   onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  rowsPerPageOptions={[15, 30, 45, 60]} // Include 10 in the options
+                  autoHeight
                 />
               </Box>
             ) : (
@@ -323,8 +399,8 @@ export function CreditDebitScreen() {
             )}
           </Grid>
 
-          {onHoldSummary.length > 0 ? (
-            <Box>
+          {earmarkDetails.length > 0 ? (
+            <Box mt={15}>
               <Typography>
                 <span>Jump to page: </span>
                 <select value={currentPage + 1} onChange={handlePageJump}>
@@ -344,25 +420,17 @@ export function CreditDebitScreen() {
 
           {/* Action Buttons */}
 
-          {onHoldSummary.length > 0 ? (
+          {earmarkDetails.length > 0 ? (
             <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
               <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-                <CustomButton
-                  btnBG={colors.grey[900]}
-                  btnColor={colors.grey[100]}
-                  btnStartIcon={
-                    <img src="../../assets/common/Cross.svg" width={22} />
-                  }
-                  btnTxt={"Cancel"}
-                ></CustomButton>
+               
 
                 <CustomButton
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
-                  btnStartIcon={
-                    <img src="../../assets/common/Tick.svg" width={22} />
-                  }
-                  btnTxt={"Release"}
+                 
+                  btnTxt={"ADD NEW"}
+                  onClick={addNewEarmark}
                 ></CustomButton>
 
                 <CustomButton
@@ -383,9 +451,12 @@ export function CreditDebitScreen() {
           )}
           {/* Action Buttons */}
 
-            {/* activity list */}
-            <UserActivityInfo/>
+
+         {/* activity list */}
+          <UserActivityInfo/>
              {/* activity list */}
+                
+           
         </Grid>
       </SnackbarProvider>
     </Box>

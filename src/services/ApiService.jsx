@@ -10,8 +10,8 @@ export const getBasicAuth = (includeAuthorizationHeader) => {
   let headers = {};
   if (includeAuthorizationHeader) {
     const headerTokken = generateBasicAuthHeader();
-    //const authToken = "BASIC " + headerTokken;
-    const authToken = "BASIC " + "eW1jYXVzZXI6MnhKeHp3RUdzaDNTNFF2RUMvZWRwZz09";
+    const authToken = "BASIC " + headerTokken;
+    //const authToken = "BASIC " + "eW1jYXVzZXI6MnhKeHp3RUdzaDNTNFF2RUMvZWRwZz09";
     DebugLog("authToken====" + authToken);
     headers[AUTHORIZATION] = authToken;
   }
@@ -127,6 +127,86 @@ export const getEarMarkDetails = (reqestParams) => {
   );
 };
 
+
+// update earMarks details
+export const updateEarMarkDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_UPDATE_EARMAKR_DETAILS_API_URL,
+    reqestParams
+  );
+};
+
+
+
+// update earMarks details
+export const deleteEarMarkDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_DELETE_EARMAKR_DETAILS_API_URL,
+    reqestParams
+  );
+};
+
+
+// get earMarks timeline details
+export const getEarMarkTimelineDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_GET_EARMAKR_TIMELINE_DETAILS_API_URL,
+    reqestParams
+  );
+};
+
+
+// get earMarks activity details
+export const getEarmarkActivityDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_GET_EARMAKR_ACTIVITY_DETAILS_API_URL,
+    reqestParams
+  );
+};
+
+// get earMarks  details summary top bar
+export const getEarmarkDetailsSummaryTopBarItems = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_GET_EARMAKR_DETAILS_SUMMARY_API_URL,
+    reqestParams
+  );
+};
+
+
+// get earMarks details
+export const getCreditDebitDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_DEBIT_CREDIT_API_URL,
+    reqestParams
+  );
+};
+
+// get freeze account details
+export const getFreezeAccountList = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_GET_FREEZ_ACCOUNT_DETAILS_API_URL,
+    reqestParams
+  );
+};
+
+
+
+// get freeze account details
+export const updateAccountDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_UPDATE_FREEZE_ACCOUNT_DETAILS_API_URL,
+    reqestParams
+  );
+};
+
+
+// get freeze account details to add new account to freeze
+export const getAccountDetailsToAdd = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_GET_FREEZE_ACCOUNT_DETAILS_TO_ADD_API_URL,
+    reqestParams
+  );
+};
 
 
 

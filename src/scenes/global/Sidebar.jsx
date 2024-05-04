@@ -172,15 +172,15 @@ const Sidebar = () => {
     try {
       if (sessionId !== "") {
         const userDetails = getFromLocalStorageJsonObject(LOGIN_RESPONSE);
-        DebugLog("userDetails from sidebar    " + JSON.stringify(userDetails));
+        //DebugLog("userDetails from sidebar    " + JSON.stringify(userDetails));
 
         let incentives = [];
         let adjustments = [];
 
         //const menuArray = userDetails
-        DebugLog("menuList from sidebar    " + JSON.stringify(userDetails));
+        //DebugLog("menuList from sidebar    " + JSON.stringify(userDetails));
         if (!isEmptyArray(userDetails)) {
-          DebugLog("userDetails.length  ==== " + userDetails.length);
+          //DebugLog("userDetails.length  ==== " + userDetails.length);
           let menuListSize = userDetails.length;
           if (menuListSize != null && menuListSize > 0) {
             userDetails.forEach((item, index) => {
@@ -191,13 +191,13 @@ const Sidebar = () => {
               }
             });
 
-            DebugLog(
-              "incentives from sidebar    " + JSON.stringify(incentives)
-            );
+            // DebugLog(
+            //   "incentives from sidebar    " + JSON.stringify(incentives)
+            // );
 
-            DebugLog(
-              "adjustments from sidebar    " + JSON.stringify(adjustments)
-            );
+            // DebugLog(
+            //   "adjustments from sidebar    " + JSON.stringify(adjustments)
+            // );
 
             setPayout(false);
             setOnHold(false);
@@ -343,6 +343,14 @@ const Sidebar = () => {
                 >
                   Incentive
                 </Typography> */}
+
+            <Typography
+              variant="subtitle2"
+              color={colors.grey[300]}
+              sx={{ m: "5px 0 5px 7px" , whiteSpace: isCollapsed ? 'wrap' : 'nowrap' }}
+            >
+              Incentive
+            </Typography>
                 <Item
                   title={VALIDATIONS}
                   to={VALIDATION_ROUTE}
@@ -456,6 +464,8 @@ const Sidebar = () => {
                   Reports
                 </Typography> */}
 
+
+
                 <Item
                   title={REPORTS}
                   to={REPORTS_ROUTE}
@@ -474,8 +484,17 @@ const Sidebar = () => {
                   setSelected={setSelected}
                   visible={true}
                 />
-
-                <Item
+             {Earmark && (    
+            <Typography
+              variant="subtitle2"
+              color={colors.grey[300]}
+              sx={{ m: "5px 0 5px 5px" , whiteSpace: isCollapsed ? 'wrap' : 'nowrap' }}
+             >
+              Adjustment
+            </Typography>
+               )}
+              
+                {/* <Item
                   title={ADJUSTMENT}
                   to={ADJUSTMENT_ROUTE}
                   icon={
@@ -495,7 +514,7 @@ const Sidebar = () => {
                   selected={selected}
                   setSelected={setSelected}
                   visible={true}
-                />
+                /> */}
                 <Item
                   title={EARMARK}
                   to={EARMARK_ROUTE}

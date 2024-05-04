@@ -280,12 +280,12 @@ const PayoutsArchive = () => {
                 navScreen: "PayoutArchieve",
               };
 
-              navigate(CONSTANT.SUCCESS, { state: { data: props } });
+              navigate(CONSTANT.SUCCESS_ROUTE, { state: { data: props } });
             })
             .catch((error) => {
               if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
                 try {
-                  navigate("/");
+                  navigate(CONSTANT.LOGIN);
                 } catch (error) {
                   DebugLog("error " + error);
                 }
@@ -350,12 +350,12 @@ const PayoutsArchive = () => {
                 navScreen: "PayoutArchieve",
               };
 
-              navigate(CONSTANT.SUCCESS, { state: { data: props } });
+              navigate(CONSTANT.SUCCESS_ROUTE, { state: { data: props } });
             })
             .catch((error) => {
               if (error.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
                 try {
-                  navigate("/");
+                  navigate(CONSTANT.LOGIN);
                 } catch (error) {
                   DebugLog("error " + error);
                 }
@@ -541,8 +541,7 @@ const PayoutsArchive = () => {
               variant="h3"
             >
               {
-                getFromLocalStorageJsonObject(NAV_PAYOUT_DETAIL_DATA)
-                  .payoutCycle
+                getFromLocalStorageJsonObject(NAV_PAYOUT_DETAIL_DATA).payoutCycle
               }
             </Typography>
           </Grid>

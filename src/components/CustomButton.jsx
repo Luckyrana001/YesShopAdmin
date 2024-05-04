@@ -10,7 +10,6 @@ const CustomButton = ({
   btnStartIcon,
   btnEndIcon,
   onClick,
-  btnBorder
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -27,7 +26,6 @@ const CustomButton = ({
           fontWeight: "700",
           letterSpacing: "1.25px",
           padding: "8px 24px",
-          border: btnBorder
         },
         "& .customBtn:hover": {
           backgroundColor: btnBG,

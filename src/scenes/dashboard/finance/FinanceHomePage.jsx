@@ -76,20 +76,11 @@ const FinanceHomePage = () => {
   const [onHoldData, setOnHoldData] = useState([]);
   const [userName, setUserName] = useState([]);
 
-  function checkUserAuthExistOrNot() {
-    if (getFromLocalStorage(SESSION_ID) === "") {
-      navigate("/");
-      return;
-    }
-  }
-
   useEffect(() => {
     setUserName(getFromLocalStorage(USER_NAME));
 
-    checkUserAuthExistOrNot();
-
     // get Payout Summary
-    getPayoutSummaryData();
+     getPayoutSummaryData();
 
     // get on hold Summary
     getOnHoldData();

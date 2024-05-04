@@ -10,7 +10,7 @@ export function generateBasicAuthHeader() {
   const newString = userName + ":" + hashedPassword;
   const encodedString = btoa(newString);
   const finalString = encodedString.replace(/\n/g, ""); // Remove newline characters
-  DebugLog("Encoded string:", finalString);
+  //DebugLog("Encoded string:", finalString);
 
   return finalString;
 }
@@ -24,7 +24,7 @@ function getHashedPassword(passwordToHash, salt) {
     const hashResult = md5Hash.digest();
     const base64Encoded = Buffer.from(hashResult).toString("base64");
     generatedPassword = base64Encoded.replace(/\n/g, ""); // Remove newline characters
-    DebugLog("generatedPassword===========" + generatedPassword);
+    //DebugLog("generatedPassword===========" + generatedPassword);
   } catch (error) {
     DebugLog("Hashing error:", error);
   }

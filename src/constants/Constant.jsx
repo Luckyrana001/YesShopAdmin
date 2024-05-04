@@ -1,5 +1,5 @@
 // Routes started
-export const LOGIN = "/SignInSide";
+export const LOGIN = "/SignIn";
 export const FINANCE_DASHBOARD = "/dashboard";
 export const DELAER_DASHBOARD_ROUTE = "/dealer_dashboard";
 export const VALIDATION_ROUTE = "/validations";
@@ -20,7 +20,13 @@ export const PAYOUT_TRANSACTION_DETAILS = "/payoutsTransactionDetails";
 export const PAYOUT_ALL_TRANSACTION_DETAILS = "/payoutsAllTransactionDetails";
 export const ON_HOLD_DETAILS_ROUTE = "/onHoldDetails";
 export const ON_HOLD_ALL_TRANSACTIONS_DETAILS = "/onHoldAllTransactions";
-export const SUCCESS = "/success";
+export const SUCCESS_ROUTE = "/success";
+export const ADD_DEALER_ROUTE = "/addDealer";
+export const UNFREEZE_FREEZE_DEALER_ROUTE = "/FreezeUnfreezeDealer";
+
+
+
+
 
 export const ADJUSTMENT_ROUTE = "/adjustment";
 export const EARMARK_ROUTE = "/earkmark";
@@ -38,6 +44,8 @@ export const IS_AUTH_PAGE = "isAuthPage";
 export const GET_DIALOG_STATUS = "getDialogStatus";
 export const GET_SESSION_ID_STATUS = "getSessionIdStatus";
 export const GLOBAL_SEARCH = "global-search";
+export const GET_DIALOG_DATA = "dialog-params";
+
 export const NAVIGATION_DATA = "nav_data";
 export const NAVIGATION_PAYOUT_ALL_TRANSACTION_DATA =
   "nav_payout_all_tranascation_data";

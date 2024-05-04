@@ -31,10 +31,6 @@ import SignInSide from "./scenes/login/SignInSide";
 import * as CONSTANT from "./constants/Constant";
 import FinanceHomePage from "./scenes/dashboard/finance/FinanceHomePage";
 
-import { SnackbarProvider, useSnackbar } from "notistack";
-import ConnectionStatus from "./utils/ConnectionStatus";
-import UseOnlineStatus from "./utils/UseOnlineStatus";
-import CustomProgressDialog from "./components/CustomProgressDialog";
 import { OnHoldSummary } from "./scenes/onhold";
 import ExclusionScreen from "./scenes/exclusion";
 import { WitholdingTaxScreen } from "./scenes/witholdingTax";
@@ -46,6 +42,9 @@ import PayoutsTransactionDetails from "./scenes/payoutsArchive/PayoutsTransactio
 import { OnHoldDetails } from "./scenes/onhold/OnHoldDetails";
 import { OnHoldAllTransactionsDetails } from "./scenes/onhold/OnHoldAllTransactionsDetails";
 import SuccessPage from "./scenes/success/SuccessPage";
+import { AddDealerScreen } from "./scenes/earmark/AddDealer";
+import PageNotFound from "./scenes/notFound/NotFound";
+import { FreezeUnfreezeDealer } from "./scenes/freezeAccount/FreezeUnfreezeDealer";
 
 //import RouteB from './scenes/payoutsArchive/payoutsArchive';
  function App() {
@@ -94,12 +93,13 @@ const handleProgressClick = (event) => {
               <Route path={CONSTANT.PAYOUT_ALL_TRANSACTION_DETAILS} element={<PayoutsTransactionDetails />} />
               <Route path={CONSTANT.ON_HOLD_DETAILS_ROUTE} element={<OnHoldDetails />} />
               <Route path={CONSTANT.ON_HOLD_ALL_TRANSACTIONS_DETAILS} element={<OnHoldAllTransactionsDetails />} />
-              <Route path={CONSTANT.SUCCESS} element={<SuccessPage />} />
-              
-              
-              
+              <Route path={CONSTANT.SUCCESS_ROUTE} element={<SuccessPage />} />
+              <Route path={CONSTANT.ADD_DEALER_ROUTE} element={<AddDealerScreen />} />
+              <Route path={CONSTANT.UNFREEZE_FREEZE_DEALER_ROUTE} element={<FreezeUnfreezeDealer />} />
+
               <Route path={CONSTANT.FORMS_ROUTE} element={<Form />} />
               <Route path="/team" element={<DataGridDemo />} />
+            
               
               {/* 
               <Route path="/bar" element={<Bar />} />
@@ -108,6 +108,9 @@ const handleProgressClick = (event) => {
               <Route path="/faq" element={<FAQ />} />
               {/* <Route path="/calendar" element={<Calendar />} />
               <Route path="/geography" element={<Geography />} /> */}
+
+             <Route path="*" element={<PageNotFound />} />
+                
             </Routes>
           </main>
         </div>

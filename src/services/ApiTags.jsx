@@ -7,6 +7,8 @@ export const ApiType = {
 
   ON_HOLD_COMPANY_DETAILS: "onHoldCompany",
   GET_EARMARKS_DETAILS: "getEarmarkDetails",
+  GET_WITHHOLDING_DETAILS: "getWithholdingDetails",
+  GET_FREEZE_ACCOUNT_DEALER_LIST: "addDealerForFreezeAccount",
 };
 
 export const ApiErrorCode = {

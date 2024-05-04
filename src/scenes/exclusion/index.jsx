@@ -100,7 +100,7 @@ const ExclusionScreen = () => {
   const [exclusionList, setExclusionList] = useState([]);
   const [gridHeight, setGridHeight] = useState(108); // Default height
   const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(4);
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
@@ -118,17 +118,32 @@ const ExclusionScreen = () => {
     setCurrentPage(newPage);
   };
 
-  // increase - decrease list layout height on available list itmes count
-  function getDataGridHeight() {
-    // Calculate the total height required for the grid
-    const headerHeight = 100; // Height of header row
-    const rowHeight = 100; // Height of each data row
-    const rowCount = totalNoOfRows; // Total number of data rows
-    const totalHeight = headerHeight + rowCount * rowHeight;
-
-    // Set the grid height
-    setGridHeight(totalHeight);
+  
+ // increase - decrease list layout height on available list itmes count
+ function getDataGridHeight() {
+  // Calculate the total height required for the grid
+  const headerHeight = 100; // Height of header row
+  const rowHeight = 60; // Height of each data row
+  let rowCount = 0;
+  if(totalNoOfRows <= pageSize){
+    rowCount = totalNoOfRows; // Total number of data rows
+  }else{
+    rowCount = pageSize; // Total number of data rows
   }
+  
+  const totalHeight = headerHeight + rowCount * rowHeight;
+
+  // Set the grid height
+  setGridHeight(totalHeight);
+}
+const handlePageSizeChange = (newPageSize) => {
+  // Here, you would fetch new data based on the new page size
+  // For the sake of this example, let's just set the page size
+  // without updating the data
+  console.log('Page size changed to:', newPageSize);
+  setPageSize(newPageSize)
+  getDataGridHeight()
+};
 
   function checkUserAuthExistOrNot() {
     if (getFromLocalStorage(SESSION_ID) === "") {
@@ -578,6 +593,9 @@ const ExclusionScreen = () => {
                   rowCount={filteredRows.length}
                   pagination
                   onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  rowsPerPageOptions={[15, 30, 45, 60]} // Include 10 in the options
+                  autoHeight
                 />
               </Box>
             ) : (
@@ -593,7 +611,7 @@ const ExclusionScreen = () => {
           {/* Validations Section */}
 
           {exclusionList.length > 0 ? (
-            <Box>
+            <Box mt={1}>
               <Typography>
                 <span>Jump to page: </span>
                 <select value={currentPage + 1} onChange={handlePageJump}>
