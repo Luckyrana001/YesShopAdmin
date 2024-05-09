@@ -131,10 +131,22 @@ export function WitholdingTaxScreen() {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
         setLoading(true); 
-
+      //   {
+      //     "companyCode": "A7544",
+      //     "companyName": "Simpro Mobile Enterprise",
+      //     "startDate": "2023-07-01",
+      //     "endDate": "2023-07-15",
+      //     "vendor": "5000700000",
+      //     "summaryAmount": 2
+      // },
         const requestObject = {
           pageNumber: 0,
-          pageSize: 10,
+          pageSize: 100,
+          //payoutStartYear:'2024',
+          companyCode: "A0002",
+          companyName: "YTL Digital Sdn Bhd (Yes Stores)",
+          vendorCode: "5000700000"
+
         };
 
         initializeEncryption(

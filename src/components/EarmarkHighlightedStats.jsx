@@ -114,7 +114,7 @@ const EarmarkHighlightStats = ({
               fontWeight: "600",
             }}
           >
-          RM  {highlight1Stat}
+          {highlight1Stat}
           </Grid>
         </Grid>
         <Grid container direction={"column"} justifyContent={"space-evenly"}>

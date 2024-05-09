@@ -1,4 +1,5 @@
-import { Avatar, IconButton, Typography, colors } from "@mui/material";
+import { Avatar, IconButton, Typography, colors ,InputBase, TextField} from "@mui/material";
+
 
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
@@ -18,6 +19,7 @@ import CustomProgressDialog from "../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../components/ErrorAlertDialog";
 import { useAtom } from "jotai";
 import * as CONSTANT from "../../constants/Constant";
+
 
 import {
   globalSearchText,
@@ -45,6 +47,9 @@ import { ApiErrorCode, ApiType } from "../../services/ApiTags";
 import UserActivityInfo from "../../components/UserActivity";
 import { initializeEncryption } from "../../services/AesGcmEncryption";
 import AddEarmarkDialogInput from "../earmark/AddEarmarkDialog";
+import SearchIcon from "@mui/icons-material/Search";
+import ToolbarFilterButton from "../earmark/ToolbarFilterButton";
+import DatePickerDialog from "../../components/DatePickerDialog";
 
 export function FreezeUnfreezeDealer() {
   const theme = useTheme();
@@ -60,6 +65,8 @@ export function FreezeUnfreezeDealer() {
   const [content, setContent] = useState("");
   const [, setError] = useState("");
   const [getProgressbarText, setProgressbarText] = useState("");
+  const [searchDealerQuery, setDealerSearchQuery] = useState(""); //useAtom(globalSearchText);
+  const [filter, setFilter] = useState("");
 
   const [earmarkDetails, setearmarkDetails] = useState([]);
   const [gridHeight, setGridHeight] = useState(108); // Default height
@@ -70,7 +77,17 @@ export function FreezeUnfreezeDealer() {
 
   const [open, setOpen] = useState(false);
   const [accountDetailsToAdd, setAccountDetailsToAdd] = useState([]);
- 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const handleOpenDialog = () => {
+    setIsDialogOpen(true);
+
+   //DateCalendarReferenceDate()
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+  };
 
   // increase - decrease list layout height on available list itmes count
   function getDataGridHeight() {
@@ -131,7 +148,102 @@ export function FreezeUnfreezeDealer() {
 );
 
 
+function addDealerSearchButtonClicked() {
+  alert(searchDealerQuery);
+}
+const handleFilterChange = (filter) => {
+  setFilter(filter);
+  // Perform filtering logic or update state as needed
+  // <button onClick={handleOpenDialog}>Open Date Picker</button>
+  handleOpenDialog()
 
+};
+ function addUpdateDealerFreezeStatus() {
+    try {
+      if (isNetworkConnectionAvailable) {
+        setProgressbarText(LOADING_PLEASE_WAIT);
+        setLoading(true); 
+  
+        const requestObject = {
+          // pageNumber: 0,
+          // pageSize: 100,
+          // sortBy:'name',
+          // sortOrder:'ASC',
+          accountCode: '',
+          vendorCode:'',
+          //accountName:'',
+          accountName:"Sanity PDC Testing"
+        };
+  
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_FREEZE_ACCOUNT_DEALER_LIST
+        ).then((encryptedContentData) => {
+          const requestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+  
+          getAccountDetailsToAdd(requestData)
+            .then((response) => {
+             // setAccountDetailsToAdd(response.data.result.totalFrozen)
+              const contentData = response.data.result.accountList.map((row) => ({
+                ...row,
+                id: generateRandomId(),
+              }));
+              setAccountDetailsToAdd(contentData);
+              setTotalNoOfRows(response.data.result.accountList.length);
+              setLoading(false);
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate(CONSTANT.LOGIN);
+                } catch (error) {
+                  DebugLog("error " + error);
+                } 
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+  
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+      );
+    }
+  }
+  
+  
+
+
+
+  
 function getFreezeAccountDetailsToAdd() {
     try {
       if (isNetworkConnectionAvailable) {
@@ -215,7 +327,6 @@ function getFreezeAccountDetailsToAdd() {
   
   
   
-  
  
 
   function blockNavigation(location, action) {
@@ -260,6 +371,7 @@ function getFreezeAccountDetailsToAdd() {
       <SnackbarProvider maxSnack={3}>
         <ConnectionStatus />
         <AddEarmarkDialogInput open={open} onClose={handleClose} />
+       
         <ShowErrorAlertDialog
           status={getDialogStatus}
           title={title}
@@ -282,25 +394,73 @@ function getFreezeAccountDetailsToAdd() {
         >
 
  {/* Header */}
- <Grid container direction={"row"} alignItems={"center"} mb={2} ml={2}>
-          <Grid item mr={2}>
-            <IconButton href={CONSTANT.FREEZE_ACCOUNT_ROUTE} width={12}>
-              <img src={"../../assets/common/Back.svg"} width={12} />
-            </IconButton>
-          </Grid>
-          <Grid item>
-            <Typography
-              color={colors.grey[100]}
-              fontWeight={"600"}
-              variant="h3"
+ <Grid
+            container
+            direction={"row"}
+            alignItems={"center"}
+            mb={2}
+            ml={2}
+            mt={1}
+          >
+            <Grid item mr={2}>
+              <IconButton href={CONSTANT.EARMARK_ROUTE} width={12}>
+                <img src={"../../assets/common/Back.svg"} width={12} />
+              </IconButton>
+            </Grid>
+
+            <Grid item>
+              <Typography
+                color={colors.grey[100]}
+                fontWeight={"600"}
+                variant="h3"
+              >
+                {"Add Dealer"}
+              </Typography>
+            </Grid>
+
+
+            <Box position="absolute" right={30} top={100}>
+
+            <Grid
+              container
+              direction={"row"}
+              alignItems={"center"}
             >
-              {
-                "Add Dealer"
-              }
-            </Typography>
+              {/* SEARCH BAR */}
+              <Box
+                backgroundColor={colors.grey[900]}
+                borderRadius="20px"
+                ml={5}
+                mr={2}
+                
+              >
+                <InputBase
+                  sx={{ ml: 2, flex: 1 }}
+                  placeholder="Search Dealer"
+                  value={searchDealerQuery}
+                  onChange={(e) => setDealerSearchQuery(e.target.value)}
+                />
+
+                <IconButton type="button" sx={{ p: 1 }}>
+                  <SearchIcon onClick={addDealerSearchButtonClicked} />
+                </IconButton>
+              </Box>
+
+              <ToolbarFilterButton
+                options={["Name", "Dealer Code", "Vendor Code","Status","Company"]}
+                defaultOption="Option 1"
+                onChange={handleFilterChange}
+              />
+
+              <button onClick={handleOpenDialog}>Open Date Picker</button>
+            </Grid>
+
+            </Box>
           </Grid>
-        </Grid>
-        {/* Header */}
+
+        
+          <DatePickerDialog open={isDialogOpen} onClose={handleCloseDialog} />
+          {/* Header */}
 
 
 
@@ -323,6 +483,14 @@ function getFreezeAccountDetailsToAdd() {
             highlight3Stat={"RM 31.47"}
           ></HighlightStats> */}
           {/* Highlight Stats */}
+
+
+
+
+
+
+
+
 
           {/* On Hold Section */}
           <Grid
@@ -540,4 +708,7 @@ export const freezeAccountButtonClick = (id) => {
     alert("button click")
     // Handle button click action here
     console.log('Button clicked for row with ID:', id);
+
+
+    
   };

@@ -13,6 +13,7 @@ import {
   NAVIGATION_PAYOUT_ALL_TRANSACTION_DATA,
   OPEN_SLIDING_MENU,
   PROGRESS_STATUS,
+  SELECTED_TAB,
 } from "../constants/Constant";
 import { ALERT } from "../constants/Strings";
 
@@ -25,6 +26,7 @@ export const isAuthPageAtom = atomWithStorage(IS_AUTH_PAGE, true);
 export const collapseMenu = atomWithStorage(COLLAPSE_MENU, true);
 export const globalSearchText = atomWithStorage(GLOBAL_SEARCH, "");
 export const selectedItems = atomWithStorage(GET_DIALOG_DATA, {});
+export const selectedSidebarTab = atomWithStorage(SELECTED_TAB, "dashboard");
 
 //Api and network error message
 export const loadingStatus = atomWithStorage(PROGRESS_STATUS, true);

@@ -39,7 +39,7 @@ import {
   SESSION_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
 import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
-import { getAccountDetailsToAdd, getFreezeAccountList } from "../../services/ApiService";
+import { getAccountDetailsToAdd, getFreezeAccountList, unFreezeAccountDetails, updateFreezeAccountDetails } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
 import { earmarksDetailsColumnHeader, freezedAccountDetailsColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
@@ -48,6 +48,7 @@ import UserActivityInfo from "../../components/UserActivity";
 import { initializeEncryption } from "../../services/AesGcmEncryption";
 import AddEarmarkDialogInput from "../earmark/AddEarmarkDialog";
 import EarmarkHighlightStats from "../../components/EarmarkHighlightedStats";
+import FrozenAccountUpdateDialog from "./FrozenAccountUpdateDialog";
 
 export function FreezeAccountScreen() {
   const theme = useTheme();
@@ -56,6 +57,8 @@ export function FreezeAccountScreen() {
 
   const isNetworkConnectionAvailable = UseOnlineStatus();
   const [selectedItem, setSelectedItem] = useAtom(selectedItems);
+  const [openSaveAndRemoveDialog, setOpenSaveAndRemoveDialog] = useState(false);
+  const [earmarkActivityDetails, setearmarkActivityDetails] = useState([]);
 
   const [getDialogStatus, setErrorDialog] = useAtom(showErrorAlertDialog);
   const { enqueueSnackbar } = useSnackbar();
@@ -177,9 +180,15 @@ const handlePageSizeChange = (newPageSize) => {
 const handleRowClick = (params) => {
   setSelectedItem(params.row);
  
-  //setOpenSaveAndRemoveDialog(true);
+  setOpenSaveAndRemoveDialog(true);
   //alert("Back button is disabled.");
 }
+
+
+const handleCloseSaveAndUnfreezeEarmarkDialog = () => {
+  setOpenSaveAndRemoveDialog(false);
+  DebugLog("Dialog Closed");
+};
 
 
 function getFreezeAccountDetailsToAdd() {
@@ -309,6 +318,171 @@ function getFreezeAccountDetailsToAdd() {
               if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
                 try {
                   navigate(CONSTANT.LOGIN);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+      );
+    }
+  }
+
+  function requestUpdateFreezeAccountDetailsData(params,updatedValue) {
+    try {
+      if (isNetworkConnectionAvailable) {
+        setProgressbarText(LOADING_PLEASE_WAIT);
+        setLoading(true);
+
+        const requestObject = {
+         
+
+          //accountName: updatedValue.company,
+          accountCode: updatedValue.code,
+         // vendorCode: updatedValue.vendorCode,
+         unFreezeReason: updatedValue.frozenReason,
+         // freezeReason: updatedValue.frozenReason,
+         // pic:updatedValue.pic,
+         // bankAccountNumber:updatedValue.accountNo,
+         // bankName:updatedValue.bank,
+        // status:params.status
+        //  unFreezeReason:updatedValue.frozenReason
+        };
+
+        // "accountCode": "string",
+        // "accountName": "string",
+        // "bankAccountNumber": "string",
+        // "bankName": "string",
+        // "freezeReason": "string",
+        // "pic": "string",
+        // "status": "string",
+        // "unFreezeReason": "string"
+
+
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const requestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          updateFreezeAccountDetails(requestData)
+            .then((response) => {
+              setLoading(false);
+              showErrorAlert("UPDATED", "Freeze account details updated Successfully.");
+              getFreezeAccountDetailsData(); // load list again
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+      );
+    }
+  }
+
+  function requestUnFreezeAccountDetailsData(params) {
+    try {
+      if (isNetworkConnectionAvailable) {
+        setProgressbarText(LOADING_PLEASE_WAIT);
+        setLoading(true);
+
+        const requestObject = {
+          code: params.code,
+          date: params.date,
+          earmark: params.earmark,
+          // fromDate: params.fromDate,
+          // toDate: params.toDate,
+          name: params.name,
+          reason: params.reason,
+        };
+
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.GET_EARMARKS_DETAILS
+        ).then((encryptedContentData) => {
+          const requestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          unFreezeAccountDetails(requestData)
+            .then((response) => {
+              //setearmarkDetails(contentData);
+              setLoading(false);
+              showErrorAlert("UNFREEZED", "Account un-freezed successfully.");
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
                 } catch (error) {
                   DebugLog("error " + error);
                 }
@@ -533,6 +707,14 @@ function getFreezeAccountDetailsToAdd() {
 
           {/* On Hold Section */}
 
+          <FrozenAccountUpdateDialog
+            open={openSaveAndRemoveDialog}
+            onClose={handleCloseSaveAndUnfreezeEarmarkDialog}
+            onDialogButtonClick={requestUpdateFreezeAccountDetailsData}
+            onDialogRemoveButtonClick={requestUnFreezeAccountDetailsData}
+            data={selectedItem}
+          />
+
           {/* Action Buttons */}
 
           {allFreezeAccountDetails.length > 0 ? (
@@ -543,7 +725,6 @@ function getFreezeAccountDetailsToAdd() {
                 <CustomButton
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
-                 
                   btnTxt={"ADD NEW"}
                   onClick={freezeUnfreezeAddDealer}
                 ></CustomButton>
@@ -568,7 +749,7 @@ function getFreezeAccountDetailsToAdd() {
 
 
          {/* activity list */}
-          <UserActivityInfo/>
+          <UserActivityInfo data={earmarkActivityDetails} />
              {/* activity list */}
                 
            

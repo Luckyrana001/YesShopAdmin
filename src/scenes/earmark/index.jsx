@@ -80,11 +80,6 @@ export function EarmarkScreen() {
   const [earmarkActivityDetails, setearmarkActivityDetails] = useState([]);
   const [earmarkDetailsSummary, setearmarkDetailsSummary] = useState([]);
 
-  // const [gridHeight, setGridHeight] = useState(108); // Default height
-  // const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
-  // const [pageSize, setPageSize] = useState(5);
-  // const [currentPage, setCurrentPage] = useState(0);
-  // const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
   const [open, setOpen] = useState(false);
   const [openSaveAndRemoveDialog, setOpenSaveAndRemoveDialog] = useState(false);
@@ -128,22 +123,20 @@ export function EarmarkScreen() {
 
     getDataGridHeight();
 
-    //getEarmarksDetailsSummary()
+    getEarmarksDetailsSummary()
 
     requestEarMarkDetailsData();
 
     getEarmarkTimelineDetails();
 
-    //  getActivityDetails()
+    getActivityDetails()
 
     showNoInternetSnackBar();
 
     navigate(blockNavigation);
   }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
 
-  const handleOpen = () => {
-    setOpen(true);
-  };
+ 
 
   const handleClose = () => {
     setOpen(false);
@@ -164,8 +157,8 @@ export function EarmarkScreen() {
   };
 
   function addNewEarmark() {
-    //navigate(CONSTANT.ADD_DEALER_ROUTE)
-    setOpen(true);
+    navigate(CONSTANT.ADD_DEALER_ROUTE)
+   // setOpen(true);
   }
   function checkUserAuthExistOrNot() {
     if (getFromLocalStorage(SESSION_ID) === "") {
@@ -342,7 +335,7 @@ export function EarmarkScreen() {
         const requestObject = {
           pageNumber: 0,
           pageSize: 100,
-          fromDate: "2024-05-02T02:49:00.309Z",
+          fromDate: "2024-04-01T02:49:00.309Z",
           toDate: "2024-05-02T02:49:00.309Z",
         };
 
@@ -361,7 +354,7 @@ export function EarmarkScreen() {
           getEarmarkActivityDetails(requestData)
             .then((response) => {
               const contentData =
-                response.data.result.earmarkDetails.content.map((row) => ({
+                response.data.result.earmarkAuditDetails.content.map((row) => ({
                   ...row,
                   id: generateRandomId(),
                 }));
@@ -410,7 +403,7 @@ export function EarmarkScreen() {
     }
   }
 
-  function requestUpdateEarMarkDetailsData(params) {
+  function requestUpdateEarMarkDetailsData(params,earmarkValue,reasonValue) {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
@@ -419,11 +412,11 @@ export function EarmarkScreen() {
         const requestObject = {
           code: params.code,
           date: params.date,
-          earmark: params.earmark,
+          earmark: earmarkValue,
           // fromDate: params.fromDate,
           // toDate: params.toDate,
           name: params.name,
-          reason: params.reason,
+          reason:reasonValue,
         };
 
         initializeEncryption(
@@ -440,9 +433,9 @@ export function EarmarkScreen() {
 
           updateEarMarkDetails(requestData)
             .then((response) => {
-              //setearmarkDetails(contentData);
               setLoading(false);
               showErrorAlert("SUCCESS", "Earmark updated Successfully.");
+              requestEarMarkDetailsData(); // load list again
             })
             .catch((error) => {
               if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
@@ -637,8 +630,8 @@ export function EarmarkScreen() {
     }
   }
   const handleRowClick = (params) => {
-    setSelectedItem(params.row);
 
+    setSelectedItem(params.row);
     setOpenSaveAndRemoveDialog(true);
     //alert("Back button is disabled.");
   };
@@ -807,12 +800,16 @@ export function EarmarkScreen() {
               NoDataFound()
             )}
           </Grid>
-          <AddEarmarkDialogInput open={open} onClose={handleClose} earmarkTimeline={earmarkTimelineDetails} />
+          <AddEarmarkDialogInput open={open} onClose={handleClose}  />
+          
+          
           <SaveAndRemoveEarmarkDialog
             open={openSaveAndRemoveDialog}
             onClose={handleCloseSaveAndRemoveEarmarkDialog}
             onDialogButtonClick={requestUpdateEarMarkDetailsData}
             onDialogRemoveButtonClick={requestDeleteEarMarkDetailsData}
+            data={selectedItem}
+            earmarkTimeline={earmarkTimelineDetails}
           />
 
           {earmarkDetails.length > 0 ? (
@@ -865,7 +862,7 @@ export function EarmarkScreen() {
           {/* Action Buttons */}
 
           {/* activity list */}
-          <UserActivityInfo />
+          <UserActivityInfo  data={earmarkActivityDetails}/>
           {/* activity list */}
         </Grid>
       </SnackbarProvider>

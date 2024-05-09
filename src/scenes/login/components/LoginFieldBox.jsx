@@ -202,7 +202,8 @@ function LoginFieldBox() {
                   setLoading(false);
                 })
                 .catch((error) => {
-                  if (error.data.responseCode != -1) {
+                  setLoading(false);
+                  if (error.data!=null && error.data.responseCode !=null && error.data.responseCode != -1) {
                     const message =
                       error.response != null ? error.response : error.message;
                     showErrorAlert(

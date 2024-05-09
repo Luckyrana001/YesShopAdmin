@@ -15,39 +15,52 @@ import TimelineOppositeContent, {
 import { useEffect } from 'react';
 import { selectedItems } from '../../config/AppConfig';
 import { useAtom } from "jotai";
+import DebugLog from '../../utils/DebugLog';
 
-function SaveAndRemoveEarmarkDialog({ open, onClose, onDialogButtonClick ,onDialogRemoveButtonClick , earmarkTimeline}) {
+function SaveAndRemoveEarmarkDialog({ open, onClose, onDialogButtonClick ,onDialogRemoveButtonClick , data , earmarkTimeline}) {
 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [selectedItem, setSelectedItem] = useAtom(selectedItems);
-  const [earmarks, setEarmark] = useState(selectedItem.earmark);
-  const [reasons, setReason] = useState(selectedItem.reason);
+  // const [earmarks, setEarmark] = useState('');
+  // const [reasons, setReason] = useState('');
   const [earmarkTimelineDetails, setearmarkTimelineDetails] = useState([]);
+  let earmarkInitialValue = ''
+  let reasonInitialValue = ''
 
-     
-  const [formData, setFormData] = useState({
-    //dealer: '',
-    earmark: earmarks,
-    reason: reasons,
    
-  });
-  const [errors, setErrors] = useState({});
-
-  const [dialogOpen, setDialogOpen] = useState(open);
-
   useEffect(() => {
-     setEarmark(selectedItem.earmark)
-    setReason(selectedItem.reason)
-    if(earmarkTimeline){
+    if(data) {
+       //  earmarkInitialValue = data.earmark
+       //  reasonInitialValue = data.reason
+       //  setEarmark(data.earmark)
+       //  setReason(data.reason) 
+
+         const value = {
+          earmark: data.earmark,
+          reason: data.reason,
+         }
+         setFormData(value)
+       
+    }
+    
+    if(earmarkTimeline) {
       setearmarkTimelineDetails(earmarkTimeline)
     }
    
    // setFormData(earmarks,reasons)
     setDialogOpen(open);
     
-  }, [open,selectedItem]);
+  }, [open,data]);
+  
+  const [formData, setFormData] = useState({
+    //dealer: '',
+      earmark: '',
+      reason: '',
+  });
+  const [errors, setErrors] = useState({});
 
+  const [dialogOpen, setDialogOpen] = useState(open);
   const handleInputChange = (e) => {
     const {  name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -72,35 +85,36 @@ const handleRemove = (e) => {
 }
 
 const handleSubmit = (e) => {
-  //setFormData(earmarks,reasons)
-  // formData.earmark = earmarks
-  // formData.reason = reasons
+ 
     e.preventDefault();
     // Validation logic
     const newErrors = {};
-    
-    // if (!formData.earmark.trim()) {
-    //   newErrors.earmark = 'Earmark is required';
-    //  } 
 
-    // if (!formData.reason.trim()) {
-    //     newErrors.reason = 'Reason is required';
-    //    }
-    // if (Object.keys(newErrors).length === 0) {
-    //   // Form is valid, submit the data
-    //   console.log('Form data:', formData);
+    DebugLog("formData.earmark.trim() ======="+formData.earmark)
+    DebugLog("formData.earmark.trim() ======="+formData.reason.trim())
+    
+    if (!formData.earmark) {
+      newErrors.earmark = 'Earmark is required';
+     } 
+
+    if (!formData.reason.trim()) {
+        newErrors.reason = 'Reason is required';
+       }
+    if (Object.keys(newErrors).length === 0) {
+      // Form is valid, submit the data
+      console.log('Form data:', formData);
 
        // Close the dialog
       onClose();
 
-      onDialogButtonClick(selectedItem);
+      onDialogButtonClick(selectedItem, formData.earmark,formData.reason);
 
       
       // You can perform additional actions like sending data to a server here
-    // } else {
-    //   // Form is not valid, update the errors state
-    //   setErrors(newErrors);
-    // }
+    } else {
+      // Form is not valid, update the errors state
+      setErrors(newErrors);
+    }
   };
 
   return (
@@ -135,12 +149,12 @@ const handleSubmit = (e) => {
                 <TextField
             margin="dense"
             label="Earmark"
-            type="text"
+            type="number" 
             name="earmark"
             fullWidth
             //defaultValue={earmarks}
-           // value={formData.earmark}
-           value={earmarks}
+            value={formData.earmark}
+          // value={earmarks}
             onChange={handleInputChange}
             error={Boolean(errors.earmark)}
             helperText={errors.earmark}
@@ -168,8 +182,8 @@ const handleSubmit = (e) => {
             name="reason"
             fullWidth
             //defaultValue={reasons}
-            //value={formData.reason}
-            value={reasons}
+            value={formData.reason}
+            //value={reasons}
             onChange={handleInputChange}
             error={Boolean(errors.reason)}
             helperText={errors.reason}
@@ -227,21 +241,7 @@ const handleSubmit = (e) => {
                    ))}
 
                
-                  // <TimelineItem>
-                  //   <TimelineSeparator>
-                  //     <TimelineDot sx={{background:colors.primary[700]}} />
-                  //   <TimelineConnector sx={{ background:colors.primary[700], width:"1px", }} />
-                  //   </TimelineSeparator>
-                  //   <TimelineContent fontWeight={"600"} >+ RM 5000</TimelineContent>
-                  //   <TimelineContent color={colors.grey[300]}>22 Jan 2024</TimelineContent>
-                  // </TimelineItem>
-
-                  // <TimelineItem>
-                  //   <TimelineSeparator><TimelineDot sx={{background:colors.primary[700]}} /></TimelineSeparator>
-                  //   <TimelineContent fontWeight={"600"} >+ RM 2000</TimelineContent>
-                  //   <TimelineContent color={colors.grey[300]}>18 Dec 2023</TimelineContent>
-                  // </TimelineItem>
-               
+                 
                 </Timeline>
    ) : (
     ''

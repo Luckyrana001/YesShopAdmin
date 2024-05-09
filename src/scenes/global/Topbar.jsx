@@ -133,9 +133,9 @@ const Topbar = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
 
-            <IconButton type="button" sx={{ p: 1 }}>
+            {/* <IconButton type="button" sx={{ p: 1 }}>
               <SearchIcon />
-            </IconButton>
+            </IconButton> */}
           </Box>
 
           {/* ICONS */}

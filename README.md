@@ -1,8 +1,19 @@
-# React Admin Dashboard
+Yes Shop Admin Web Project by YTL Telecoumnicaiton
 
-Build a COMPLETE React Admin Dashboard App | React, Material UI, Data Grid, Light & Dark Mode
+// IOT website Url
+https://partnerservicesiot.ytlcomms.my/yesshopadminweb/swagger-ui.html
 
-Video: https://www.youtube.com/watch?v=wYpCWwD1oz0
 
-For all related questions and discussions about this project, check out the discord: https://discord.gg/2FfPeEk2mX
-# YesShopAdmin
+// Ytl comms gitlab repo
+git clone http://10.26.96.40/ytlc-portal-mobile-app-projects/ytlc-yesshop-admin-app.git
+
+
+// Azure Devops repo
+Azure Repo Url - https://ytlcomms@dev.azure.com/ytlcomms/Yes%20Shop%20Admin/_git/Yes%20Shop%20Admin
+
+
+git remote add origin https://ytlcomms@dev.azure.com/ytlcomms/Yes%20Shop%20Admin/_git/Yes%20Shop%20Admin
+git push -u origin --all
+
+
+

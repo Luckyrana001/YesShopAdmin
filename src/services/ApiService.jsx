@@ -136,6 +136,23 @@ export const updateEarMarkDetails = (reqestParams) => {
   );
 };
 
+// update freeze account details
+export const updateFreezeAccountDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_UPDATE_FREEZE_ACCOUNT_DETAILS_API_URL,
+    reqestParams
+  );
+};
+
+
+// update freeze account details
+export const unFreezeAccountDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_UPDATE_FREEZE_ACCOUNT_DETAILS_API_URL,
+    reqestParams
+  );
+};
+
 
 
 // update earMarks details

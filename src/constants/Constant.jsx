@@ -23,6 +23,7 @@ export const ON_HOLD_ALL_TRANSACTIONS_DETAILS = "/onHoldAllTransactions";
 export const SUCCESS_ROUTE = "/success";
 export const ADD_DEALER_ROUTE = "/addDealer";
 export const UNFREEZE_FREEZE_DEALER_ROUTE = "/FreezeUnfreezeDealer";
+export const ADD_ADJUSTMENTS_ROUTE = "/addAdjustments";
 
 
 
@@ -44,6 +45,8 @@ export const IS_AUTH_PAGE = "isAuthPage";
 export const GET_DIALOG_STATUS = "getDialogStatus";
 export const GET_SESSION_ID_STATUS = "getSessionIdStatus";
 export const GLOBAL_SEARCH = "global-search";
+export const SELECTED_TAB = "selected-tab";
+
 export const GET_DIALOG_DATA = "dialog-params";
 
 export const NAVIGATION_DATA = "nav_data";

@@ -1,4 +1,4 @@
-import { Avatar, IconButton, Typography } from "@mui/material";
+import { Avatar, IconButton, InputBase, Typography } from "@mui/material";
 
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
@@ -18,11 +18,9 @@ import CustomProgressDialog from "../../components/CustomProgressDialog";
 import ShowErrorAlertDialog from "../../components/ErrorAlertDialog";
 import { useAtom } from "jotai";
 import * as CONSTANT from "../../constants/Constant";
+import SearchIcon from "@mui/icons-material/Search";
 
-import {
-  globalSearchText,
-  showErrorAlertDialog,
-} from "../../config/AppConfig";
+import { globalSearchText, showErrorAlertDialog } from "../../config/AppConfig";
 import {
   ALERT,
   ERROR_WHILE_FETCHING_DATA,
@@ -37,7 +35,10 @@ import {
   MESSAGE_KEY,
   SESSION_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
-import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
+import {
+  generateRandomId,
+  generateRequestId,
+} from "../../utils/RequestIdGenerator";
 import { getEarMarkDetails } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
 import { earmarksDetailsColumnHeader } from "../../components/ColumnHeader";
@@ -46,6 +47,7 @@ import { ApiErrorCode, ApiType } from "../../services/ApiTags";
 import UserActivityInfo from "../../components/UserActivity";
 import { initializeEncryption } from "../../services/AesGcmEncryption";
 import AddEarmarkDialogInput from "./AddEarmarkDialog";
+import ToolbarFilterButton from "./ToolbarFilterButton";
 
 export function AddDealerScreen() {
   const theme = useTheme();
@@ -53,6 +55,7 @@ export function AddDealerScreen() {
   const navigate = useNavigate();
 
   const isNetworkConnectionAvailable = UseOnlineStatus();
+  const [filter, setFilter] = useState("");
 
   const [getDialogStatus, setErrorDialog] = useAtom(showErrorAlertDialog);
   const { enqueueSnackbar } = useSnackbar();
@@ -69,9 +72,9 @@ export function AddDealerScreen() {
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
-  const [open, setOpen] = useState(false);
+  const [searchDealerQuery, setDealerSearchQuery] = useState(""); //useAtom(globalSearchText);
 
- 
+  const [open, setOpen] = useState(false);
 
   // increase - decrease list layout height on available list itmes count
   function getDataGridHeight() {
@@ -85,7 +88,6 @@ export function AddDealerScreen() {
     setGridHeight(totalHeight);
   }
 
-  
   useEffect(() => {
     checkUserAuthExistOrNot();
 
@@ -97,28 +99,34 @@ export function AddDealerScreen() {
 
     navigate(blockNavigation);
   }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
- 
+
   const handleOpen = () => {
     setOpen(true);
+  };
+  const handleFilterChange = (filter) => {
+    setFilter(filter);
+    // Perform filtering logic or update state as needed
   };
 
   const handleClose = () => {
     setOpen(false);
-    DebugLog("Dialog Closed")
+    DebugLog("Dialog Closed");
   };
 
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
   };
 
-  
-
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
 
-  function addNewEarmark(){
+  function addNewEarmark() {
     setOpen(true);
+  }
+
+  function addDealerSearchButtonClicked() {
+    alert(searchDealerQuery);
   }
   function checkUserAuthExistOrNot() {
     if (getFromLocalStorage(SESSION_ID) === "") {
@@ -127,16 +135,16 @@ export function AddDealerScreen() {
     }
   }
   const filteredRows = earmarkDetails.filter((row) =>
-  Object.values(row).some((value) =>
-    String(value).toLowerCase().includes(searchQuery.toLowerCase())
-  )
-);
+    Object.values(row).some((value) =>
+      String(value).toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
 
   function requestEarMarkDetailsData() {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); 
+        setLoading(true);
 
         const requestObject = {
           pageNumber: 0,
@@ -157,12 +165,15 @@ export function AddDealerScreen() {
 
           getEarMarkDetails(onholdCompanyRequestData)
             .then((response) => {
-              const contentData = response.data.result.earmarkDetails.content.map((row) => ({
-                ...row,
-                id: generateRandomId(),
-              }));
+              const contentData =
+                response.data.result.earmarkDetails.content.map((row) => ({
+                  ...row,
+                  id: generateRandomId(),
+                }));
               setearmarkDetails(contentData);
-              setTotalNoOfRows(response.data.result.earmarkDetails.content.length);
+              setTotalNoOfRows(
+                response.data.result.earmarkDetails.content.length
+              );
               setLoading(false);
             })
             .catch((error) => {
@@ -218,7 +229,6 @@ export function AddDealerScreen() {
 
   function showErrorAlert(title, content) {
     try {
-    
       setError();
       setLoading(false);
 
@@ -241,7 +251,6 @@ export function AddDealerScreen() {
     }
   };
 
-  
   return (
     /* Main Container */
     <Box>
@@ -268,29 +277,69 @@ export function AddDealerScreen() {
             borderRadius: "18px",
           }}
         >
+          {/* Header */}
+          <Grid
+            container
+            direction={"row"}
+            alignItems={"center"}
+            mb={2}
+            ml={2}
+            mt={1}
+          >
+            <Grid item mr={2}>
+              <IconButton href={CONSTANT.EARMARK_ROUTE} width={12}>
+                <img src={"../../assets/common/Back.svg"} width={12} />
+              </IconButton>
+            </Grid>
 
- {/* Header */}
- <Grid container direction={"row"} alignItems={"center"} mb={2} ml={2}>
-          <Grid item mr={2}>
-            <IconButton href={CONSTANT.EARMARK_ROUTE} width={12}>
-              <img src={"../../assets/common/Back.svg"} width={12} />
-            </IconButton>
-          </Grid>
-          <Grid item>
-            <Typography
-              color={colors.grey[100]}
-              fontWeight={"600"}
-              variant="h3"
+            <Grid item>
+              <Typography
+                color={colors.grey[100]}
+                fontWeight={"600"}
+                variant="h3"
+              >
+                {"Add Dealer"}
+              </Typography>
+            </Grid>
+
+
+            <Box position="absolute" right={30} top={100}>
+
+            <Grid
+              container
+              direction={"row"}
+              alignItems={"center"}
             >
-              {
-                "Add Dealer"
-              }
-            </Typography>
+              {/* SEARCH BAR */}
+              <Box
+                backgroundColor={colors.grey[900]}
+                borderRadius="20px"
+                ml={5}
+                mr={2}
+                
+              >
+                <InputBase
+                  sx={{ ml: 2, flex: 1 }}
+                  placeholder="Search Dealer"
+                  value={searchDealerQuery}
+                  onChange={(e) => setDealerSearchQuery(e.target.value)}
+                />
+
+                <IconButton type="button" sx={{ p: 1 }}>
+                  <SearchIcon onClick={addDealerSearchButtonClicked} />
+                </IconButton>
+              </Box>
+
+              <ToolbarFilterButton
+                options={["Option 1", "Option 2", "Option 3"]}
+                defaultOption="Option 1"
+                onChange={handleFilterChange}
+              />
+            </Grid>
+
+            </Box>
           </Grid>
-        </Grid>
-        {/* Header */}
-
-
+          {/* Header */}
 
           {/* Greetings Header */}
           {/* <Grid container>
@@ -417,17 +466,14 @@ export function AddDealerScreen() {
           {earmarkDetails.length > 0 ? (
             <Grid item mt={1} justifyContent={"flex-start"} pb={10}>
               <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
-               
-
                 <CustomButton
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
-                 
                   btnTxt={"ADD NEW"}
                   onClick={addNewEarmark}
                 ></CustomButton>
 
-                <CustomButton
+                {/* <CustomButton
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
                   btnStartIcon={
@@ -437,7 +483,7 @@ export function AddDealerScreen() {
                     <img src="../../assets/common/Arrow-down.svg" height={8} />
                   }
                   btnTxt={"Download"}
-                ></CustomButton>
+                ></CustomButton> */}
               </Stack>
             </Grid>
           ) : (
@@ -445,12 +491,9 @@ export function AddDealerScreen() {
           )}
           {/* Action Buttons */}
 
-
-         {/* activity list */}
-          <UserActivityInfo/>
-             {/* activity list */}
-                
-           
+          {/* activity list */}
+          <UserActivityInfo />
+          {/* activity list */}
         </Grid>
       </SnackbarProvider>
     </Box>

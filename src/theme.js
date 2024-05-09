@@ -251,6 +251,10 @@ export const themeSettings = (mode) => {
         fontFamily: ["Montserrat", "montserrat"].join(","),
         fontSize: 16,
       },
+      h7: {
+        fontFamily: ["Montserrat", "montserrat"].join(","),
+        fontSize: 12,
+      },
     },
   };
 };

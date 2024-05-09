@@ -21,10 +21,13 @@ import * as CONSTANT from "../../constants/Constant";
 
 import {
   globalSearchText,
+  selectedItems,
+  selectedSidebarTab,
   showErrorAlertDialog,
 } from "../../config/AppConfig";
 import {
   ALERT,
+  CREDIT_DEBIT,
   ERROR_WHILE_FETCHING_DATA,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
@@ -47,6 +50,7 @@ import UserActivityInfo from "../../components/UserActivity";
 import { initializeEncryption } from "../../services/AesGcmEncryption";
 import AddEarmarkDialogInput from "../earmark/AddEarmarkDialog";
 import EarmarkHighlightStats from "../../components/EarmarkHighlightedStats";
+import CustomDatePickerDialog from "../../components/DatePickerDialog";
 
 export function CreditDebitScreen() {
   const theme = useTheme();
@@ -64,6 +68,8 @@ export function CreditDebitScreen() {
   const [content, setContent] = useState("");
   const [, setError] = useState("");
   const [getProgressbarText, setProgressbarText] = useState("");
+  const [selectedItem, setSelectedItem] = useAtom(selectedItems);
+  const [earmarkActivityDetails, setearmarkActivityDetails] = useState([]);
 
   const [earmarkDetails, setearmarkDetails] = useState([]);
   // const [gridHeight, setGridHeight] = useState(108); // Default height
@@ -72,14 +78,36 @@ export function CreditDebitScreen() {
   // const [currentPage, setCurrentPage] = useState(0);
   // const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
-  const [open, setOpen] = useState(false);
   const [gridHeight, setGridHeight] = useState(500); // Default height
   const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
   const [selectedRows, setSelectedRows] = React.useState([]);
- 
+  const [selected, setSelected] = useAtom(selectedSidebarTab);
+
+
+
+  const [open, setOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+
+
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    DebugLog("Dialog Closed")
+  };
+
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    DebugLog("Selected Date "+selectedDate)
+  };
+  
+
  // increase - decrease list layout height on available list itmes count
  function getDataGridHeight() {
   // Calculate the total height required for the grid
@@ -101,6 +129,7 @@ export function CreditDebitScreen() {
 
   
   useEffect(() => {
+
     checkUserAuthExistOrNot();
 
     getDataGridHeight();
@@ -120,15 +149,7 @@ export function CreditDebitScreen() {
     setPageSize(newPageSize)
     getDataGridHeight()
   };
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    DebugLog("Dialog Closed")
-  };
-
+ 
   const handlePageJump = (event) => {
     setCurrentPage(parseInt(event.target.value, 10) - 1);
   };
@@ -139,8 +160,8 @@ export function CreditDebitScreen() {
     setCurrentPage(newPage);
   };
 
-  function addNewEarmark(){
-    navigate(CONSTANT.ADD_DEALER_ROUTE)
+  function addNewAdjustment(){
+    navigate(CONSTANT.ADD_ADJUSTMENTS_ROUTE)
    // setOpen(true);
   }
   function checkUserAuthExistOrNot() {
@@ -231,7 +252,12 @@ export function CreditDebitScreen() {
       );
     }
   }
-
+  const handleRowClick = (params) => {
+    setSelectedItem(params.row);
+   
+    //setOpenSaveAndRemoveDialog(true);
+    alert("Credit debit click.");
+  }
   function blockNavigation(location, action) {
     // Block navigation if action is "pop", which indicates back/forward button press
     if (action === "pop") {
@@ -273,7 +299,21 @@ export function CreditDebitScreen() {
     <Box>
       <SnackbarProvider maxSnack={3}>
         <ConnectionStatus />
-        <AddEarmarkDialogInput open={open} onClose={handleClose} />
+        
+
+        {/* <div>
+      <h1>Parent Component</h1> */}
+        
+      <CustomDatePickerDialog
+        open={open}
+        onClose={handleClose}
+        onSelect={handleDateSelect}
+      />
+     
+      {/* {selectedDate && (
+        <p>Selected Date: {selectedDate ? selectedDate: 'None'}</p>
+      )}
+      </div> */}
         <ShowErrorAlertDialog
           status={getDialogStatus}
           title={title}
@@ -301,7 +341,7 @@ export function CreditDebitScreen() {
             </Grid>
           </Grid>
           {/* Greetings Header */}
-
+          <button onClick={handleOpen}>Open Date Picker</button>
           {/* Highlight Stats */}
           <EarmarkHighlightStats
            highlight0={"Total Credit"}
@@ -383,7 +423,7 @@ export function CreditDebitScreen() {
                   )}
                   columns={debitCreditAccountDetailsColumnHeader}
                   components={{ Toolbar: GridToolbar }}
-                  checkboxSelection
+                  //checkboxSelection
                   selecion
                   pageSize={pageSize}
                   rowCount={filteredRows.length}
@@ -392,6 +432,7 @@ export function CreditDebitScreen() {
                   onPageSizeChange={handlePageSizeChange}
                   rowsPerPageOptions={[15, 30, 45, 60]} // Include 10 in the options
                   autoHeight
+                  onRowClick={handleRowClick}
                 />
               </Box>
             ) : (
@@ -429,8 +470,8 @@ export function CreditDebitScreen() {
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
                  
-                  btnTxt={"ADD NEW"}
-                  onClick={addNewEarmark}
+                  btnTxt={"ADD ADJUSTMENT"}
+                  onClick={addNewAdjustment}
                 ></CustomButton>
 
                 <CustomButton
@@ -453,7 +494,7 @@ export function CreditDebitScreen() {
 
 
          {/* activity list */}
-          <UserActivityInfo/>
+          <UserActivityInfo data={earmarkActivityDetails}/>
              {/* activity list */}
                 
            

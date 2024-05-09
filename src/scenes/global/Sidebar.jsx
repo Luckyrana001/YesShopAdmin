@@ -24,6 +24,7 @@ import {
   collapseMenu,
   isAuthPageAtom,
   openSlidingMenu,
+  selectedSidebarTab,
   sessionIdStatus,
 } from "../../config/AppConfig";
 import { useAtom } from "jotai";
@@ -132,7 +133,7 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useAtom(collapseMenu);
   //const [isVisible, setIsVisible] = useAtom(false);
 
-  const [selected, setSelected] = useState("Dashboard");
+  const [selected, setSelected] = useAtom(selectedSidebarTab);
   const [isAuthPage, setAuthStatus] = useAtom(isAuthPageAtom);
   const [slidingMenuStatus, setSlidingMenu] = useAtom(openSlidingMenu);
   const [sessionIdState, setSessionIdState] = useAtom(sessionIdStatus);
