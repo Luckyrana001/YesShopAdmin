@@ -601,7 +601,7 @@ const StyledInputLabel = styled(InputLabel)({
                   </Grid>
                 </Grid>
 
-                <FormControl>
+                {/* <FormControl>
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -611,7 +611,7 @@ const StyledInputLabel = styled(InputLabel)({
                     }
                     label="I agree to the terms and conditions"
                   />
-                </FormControl>
+                </FormControl> */}
 
                 <Stack
                   direction="row"

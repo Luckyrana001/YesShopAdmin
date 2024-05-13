@@ -127,8 +127,6 @@ export function EarmarkScreen() {
 
     requestEarMarkDetailsData();
 
-    getEarmarkTimelineDetails();
-
     getActivityDetails()
 
     showNoInternetSnackBar();
@@ -172,21 +170,29 @@ export function EarmarkScreen() {
     )
   );
 
-  function getEarmarkTimelineDetails() {
+  function getEarmarkTimelineDetails(params) {
     try {
       if (isNetworkConnectionAvailable) {
         //setProgressbarText(LOADING_PLEASE_WAIT);
         // setLoading(true);
 
         const requestObject = {
-          pageNumber: 0,
-          pageSize: 100,
-          name: "Ghe Network",
-          date: "2024-05-04 17:48:00.0",
-          code: "A00010001AC",
-          vendor: "00004",
-          reason: "Negative Balance",
-          earmark: "5000",
+          accountCode: params.code,
+          transactionDate: params.date,
+          earmarkAmount: params.earmark,
+          // fromDate: params.fromDate,
+          // toDate: params.toDate,
+          accountName: params.name,
+          reason: params.reason,
+
+          // pageNumber: 0,
+          // pageSize: 100,
+          // name: "Ghe Network",
+          // date: "2024-05-04 17:48:00.0",
+          // code: "A00010001AC",
+          // vendor: "00004",
+          // reason: "Negative Balance",
+          // earmark: "5000",
         };
 
         initializeEncryption(
@@ -410,12 +416,12 @@ export function EarmarkScreen() {
         setLoading(true);
 
         const requestObject = {
-          code: params.code,
-          date: params.date,
-          earmark: earmarkValue,
+          accountCode: params.code,
+          transactionDate: params.date,
+          earmarkAmount: earmarkValue,
           // fromDate: params.fromDate,
           // toDate: params.toDate,
-          name: params.name,
+          accountName: params.name,
           reason:reasonValue,
         };
 
@@ -485,12 +491,12 @@ export function EarmarkScreen() {
         setLoading(true);
 
         const requestObject = {
-          code: params.code,
-          date: params.date,
-          earmark: params.earmark,
+          accountCode: params.code,
+          transactionDate: params.date,
+          earmarkAmount: params.earmark,
           // fromDate: params.fromDate,
           // toDate: params.toDate,
-          name: params.name,
+          accountName: params.name,
           reason: params.reason,
         };
 
@@ -630,9 +636,9 @@ export function EarmarkScreen() {
     }
   }
   const handleRowClick = (params) => {
-
     setSelectedItem(params.row);
     setOpenSaveAndRemoveDialog(true);
+    getEarmarkTimelineDetails(params)
     //alert("Back button is disabled.");
   };
 
@@ -800,6 +806,7 @@ export function EarmarkScreen() {
               NoDataFound()
             )}
           </Grid>
+          
           <AddEarmarkDialogInput open={open} onClose={handleClose}  />
           
           
@@ -832,8 +839,30 @@ export function EarmarkScreen() {
           {/* On Hold Section */}
 
           {/* Action Buttons */}
+          <Grid item mt={1} justifyContent={"flex-start"} pb={3}>
+              <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                  btnTxt={"ADD NEW"}
+                  onClick={addNewEarmark}
+                ></CustomButton>
 
-          {earmarkDetails.length > 0 ? (
+                <CustomButton
+                  btnBG={colors.grey[900]}
+                  btnColor={colors.grey[100]}
+                  btnStartIcon={
+                    <img src="../../assets/common/Download.svg" width={22} />
+                  }
+                  btnEndIcon={
+                    <img src="../../assets/common/Arrow-down.svg" height={8} />
+                  }
+                  btnTxt={"Download"}
+                ></CustomButton>
+              </Stack>
+            </Grid>
+
+          {/* {earmarkDetails.length > 0 ? (
             <Grid item mt={1} justifyContent={"flex-start"} pb={3}>
               <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
                 <CustomButton
@@ -858,7 +887,7 @@ export function EarmarkScreen() {
             </Grid>
           ) : (
             ""
-          )}
+          )} */}
           {/* Action Buttons */}
 
           {/* activity list */}

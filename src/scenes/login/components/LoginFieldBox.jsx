@@ -11,7 +11,9 @@ import { useNavigate } from "react-router-dom";
 import { atom, useAtom } from "jotai";
 import * as React from "react";
 import {
+  collapseMenu,
   isAuthPageAtom,
+  selectedSidebarTab,
   sessionIdStatus,
   showErrorAlertDialog,
 } from "../../../config/AppConfig";
@@ -19,11 +21,9 @@ import * as CONSTANT from "../../../constants/Constant";
 import { Formik } from "formik";
 import * as yup from "yup";
 import Box from "@mui/material/Box";
-import { CheckBox } from "@mui/icons-material";
 import { initializeEncryption } from "../../../services/AesGcmEncryption";
 import {
   getBasicAuth,
-  getPayoutDetails,
   getUserLoginDetails,
 } from "../../../services/ApiService";
 import ConnectionStatus from "../../../utils/ConnectionStatus";
@@ -43,9 +43,7 @@ import {
   DONT_HAVE_A_ACCOUNT_SIGNUP,
   ERROR,
   ERROR_WHILE_AUTHENTICATING_USER,
-  ERROR_WHILE_FETCHING_PAYOUT_DETAILS,
   ERROR_WHILE_RETRIEVING_BASIC_AUTH,
-  FETCHING_PAYOUT_DETAILS_PLEASE_WAIT,
   FORGOT_PASSWORD,
   LOADING_CONFIGRATION_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
@@ -84,6 +82,8 @@ function LoginFieldBox() {
   const [password, setPassword] = useState("");
   const [checked, setChecked] = useState(false);
   const [sessionIdState, setSessionIdState] = useAtom(sessionIdStatus);
+  const [selected, setSelected] = useAtom(selectedSidebarTab);
+  const [isCollapsed, setIsCollapsed] = useAtom(collapseMenu);
 
   const updateSavedUserName = () => {
     const isCheckboxRemembered =  getFromLocalStorage(REMEMBER_ME_CHECKBOX)
@@ -111,6 +111,8 @@ function LoginFieldBox() {
   }, [isNetworkConnectionAvailable, enqueueSnackbar]);
 
   const resetAllConfigration = () => {
+    setSelected("Dashboard")
+    setIsCollapsed(false)
     saveToLocalStorage(SESSION_ID, "");
     setAuthStatus(true);
     setError("");

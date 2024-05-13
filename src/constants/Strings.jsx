@@ -16,7 +16,7 @@ export const PAYOUT_DATES = "Payout Dates";
 export const FREEZE_ACCOUNT = "Freeze Account";
 export const CREDIT_DEBIT = "Credit Debit";
 export const ADJUSTMENT = "Adjustment";
-export const EARMARK = "Earkmark";
+export const EARMARK = "Earmark";
 
 export const WITHOLDING_TAX = "Withholding Tax";
 export const MANAGE_TEAM = "Manage Team";
@@ -56,3 +56,9 @@ export const REMEMBER_ME = "Remember me";
 
 // Dashboard
 export const NO_RECORD_FOUND = "No Record found";
+
+// Add Earmark
+export const ADDING_EARMARK = "Adding Earmark";
+
+// Common
+export const LOADING_FILTER_DETAILS_PLEASE_WAIT = "Loading Filter Details...";

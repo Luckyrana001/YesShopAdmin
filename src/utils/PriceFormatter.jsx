@@ -2,7 +2,10 @@ import { Box, Typography } from "@mui/material";
 import React from "react";
 
 function PriceFormatter({ price }) {
+  // try to parse price to number even if it is a string
+  price = parseFloat(price);
   if (typeof price === "number" && !isNaN(price)) {
+    // log to console typeof price
     // Assuming price is a number
     const formattedPrice = price.toFixed(2).toLocaleString();
 
@@ -19,7 +22,7 @@ function PriceFormatter({ price }) {
     return (
       <Box>
         <Typography sx={{ display: "inline-flex", marginRight: "3%" }}>
-          RM 00.00
+          RM 0.00
         </Typography>
       </Box>
     );

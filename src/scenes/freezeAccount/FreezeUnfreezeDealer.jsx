@@ -1,5 +1,11 @@
-import { Avatar, IconButton, Typography, colors ,InputBase, TextField} from "@mui/material";
-
+import {
+  Avatar,
+  IconButton,
+  Typography,
+  colors,
+  InputBase,
+  TextField,
+} from "@mui/material";
 
 import { Box, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
@@ -20,16 +26,13 @@ import ShowErrorAlertDialog from "../../components/ErrorAlertDialog";
 import { useAtom } from "jotai";
 import * as CONSTANT from "../../constants/Constant";
 
-
-import {
-  globalSearchText,
-  showErrorAlertDialog,
-} from "../../config/AppConfig";
+import { globalSearchText, selectedItems, showErrorAlertDialog } from "../../config/AppConfig";
 import {
   ALERT,
   ERROR_WHILE_FETCHING_DATA,
   LOADING_PLEASE_WAIT,
   NO_INTERNET_CONNECTION_FOUND,
+  PROCESSING_PLEASE_WAIT,
   YOU_ARE_OFFLINE,
   YOU_ARE_ONLINE,
 } from "../../constants/Strings";
@@ -39,8 +42,17 @@ import {
   MESSAGE_KEY,
   SESSION_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
-import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
-import { getAccountDetailsToAdd, getEarMarkDetails } from "../../services/ApiService";
+import {
+  generateRandomId,
+  generateRequestId,
+} from "../../utils/RequestIdGenerator";
+import {
+  addFreezeAccount,
+  getAccountDetailsToAdd,
+  getEarMarkDetails,
+  unFreezeAccountDetails,
+  updateFreezeAccountDetails,
+} from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
 import NoDataFound from "../../components/NoDataFound";
 import { ApiErrorCode, ApiType } from "../../services/ApiTags";
@@ -50,6 +62,11 @@ import AddEarmarkDialogInput from "../earmark/AddEarmarkDialog";
 import SearchIcon from "@mui/icons-material/Search";
 import ToolbarFilterButton from "../earmark/ToolbarFilterButton";
 import DatePickerDialog from "../../components/DatePickerDialog";
+import SaveAndRemoveEarmarkDialog from "../earmark/SaveAndRemoveEarmarkDialog";
+import FrozenAccountUpdateDialog from "./FrozenAccountUpdateDialog";
+import CustomButtonSmall from "../../components/CustomButtonSmall";
+import AddDealerFreezeAccountDialog from "./AddDealerFreezeAccountDialog";
+import { CurrencyCellRenderer } from "../../components/ColumnHeader";
 
 export function FreezeUnfreezeDealer() {
   const theme = useTheme();
@@ -79,10 +96,26 @@ export function FreezeUnfreezeDealer() {
   const [accountDetailsToAdd, setAccountDetailsToAdd] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [openSaveAndRemoveEarmarkDialog, setOpenSaveAndRemoveEarmarkDialog] = useState(false);
+  const [selectedItem, setSelectedItem] = useAtom(selectedItems);
+ 
+ 
+  const [openSaveAndRemoveDialog, setOpenSaveAndRemoveDialog] = useState(false);
+
+  const [openAddEarmarkDialog, setOpenAddEarmarkDialog] = useState(false);
+
+  const [selectedDealerName, setSelectedDealerName] = useState("");
+  const [selectedDealerCode, setSelectedDealerCode] = useState("");
+
+  const handleCloseSaveAndUnfreezeEarmarkDialog = () => {
+    setOpenSaveAndRemoveDialog(false);
+    DebugLog("Dialog Closed");
+  };
+  
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
 
-   //DateCalendarReferenceDate()
+    //DateCalendarReferenceDate()
   };
 
   const handleCloseDialog = () => {
@@ -101,27 +134,24 @@ export function FreezeUnfreezeDealer() {
     setGridHeight(totalHeight);
   }
 
-  
   useEffect(() => {
 
     checkUserAuthExistOrNot();
 
     getDataGridHeight();
 
-    getFreezeAccountDetailsToAdd();
-
     showNoInternetSnackBar();
 
     navigate(blockNavigation);
   }, [isNetworkConnectionAvailable, enqueueSnackbar, navigate, totalNoOfRows]);
- 
+
   const handleOpen = () => {
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
-    DebugLog("Dialog Closed")
+    DebugLog("Dialog Closed");
   };
 
   const handlePageJump = (event) => {
@@ -132,49 +162,71 @@ export function FreezeUnfreezeDealer() {
     setCurrentPage(newPage);
   };
 
-  function addNewEarmark(){
+  function addNewEarmark() {
     setOpen(true);
   }
+
+
   function checkUserAuthExistOrNot() {
     if (getFromLocalStorage(SESSION_ID) === "") {
       navigate("/");
       return;
     }
   }
+  
   const filteredRows = accountDetailsToAdd.filter((row) =>
-  Object.values(row).some((value) =>
-    String(value).toLowerCase().includes(searchQuery.toLowerCase())
-  )
-);
+    Object.values(row).some((value) =>
+      String(value).toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
+
+  // get result from search query button update
+  function addDealerSearchButtonClicked() {
+    if(searchDealerQuery===""){
+      alert("Please enter some value!")
+    }
+   else if(filter===""){
+      getFreezeAccountDetailsToAdd(searchDealerQuery,"Company Name");
+    // alert("Please select filter Type")
+    } else {
+      getFreezeAccountDetailsToAdd(searchDealerQuery,filter);
+    }
+    
+  }
 
 
-function addDealerSearchButtonClicked() {
-  alert(searchDealerQuery);
-}
-const handleFilterChange = (filter) => {
-  setFilter(filter);
-  // Perform filtering logic or update state as needed
-  // <button onClick={handleOpenDialog}>Open Date Picker</button>
-  handleOpenDialog()
+  const handleRowClick = (params) => {
+    if (!params.row.freezeReason) {
+       setSelectedItem(params.row);
+       //setOpenSaveAndRemoveEarmarkDialog(true);
+      //setSelectedItem(params.row);
+      setOpenSaveAndRemoveDialog(true);
+      //getEarmarkTimelineDetails(params)
+    }
+  };
 
-};
- function addUpdateDealerFreezeStatus() {
+  
+  const handleFilterChange = (filter) => {
+    setFilter(filter);
+  };
+
+  function addUpdateDealerFreezeStatus() {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); 
-  
+        setLoading(true);
+
         const requestObject = {
           // pageNumber: 0,
           // pageSize: 100,
           // sortBy:'name',
           // sortOrder:'ASC',
-          accountCode: '',
-          vendorCode:'',
+          accountCode: "",
+          vendorCode: "",
           //accountName:'',
-          accountName:"Sanity PDC Testing"
+          accountName: "Sanity PDC Testing",
         };
-  
+
         initializeEncryption(
           requestObject,
           getFromLocalStorage(MESSAGE_KEY),
@@ -186,14 +238,16 @@ const handleFilterChange = (filter) => {
             sessionId: getFromLocalStorage(SESSION_ID),
             contentData: encryptedContentData,
           };
-  
+
           getAccountDetailsToAdd(requestData)
             .then((response) => {
-             // setAccountDetailsToAdd(response.data.result.totalFrozen)
-              const contentData = response.data.result.accountList.map((row) => ({
-                ...row,
-                id: generateRandomId(),
-              }));
+              // setAccountDetailsToAdd(response.data.result.totalFrozen)
+              const contentData = response.data.result.accountList.map(
+                (row) => ({
+                  ...row,
+                  id: generateRandomId(),
+                })
+              );
               setAccountDetailsToAdd(contentData);
               setTotalNoOfRows(response.data.result.accountList.length);
               setLoading(false);
@@ -204,7 +258,7 @@ const handleFilterChange = (filter) => {
                   navigate(CONSTANT.LOGIN);
                 } catch (error) {
                   DebugLog("error " + error);
-                } 
+                }
               } else if (
                 error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
               ) {
@@ -218,7 +272,7 @@ const handleFilterChange = (filter) => {
                   error.response != null
                     ? error.displayErrorMessage
                     : "Unknown";
-  
+
                 if (message)
                   showErrorAlert(
                     error.message,
@@ -238,29 +292,47 @@ const handleFilterChange = (filter) => {
       );
     }
   }
-  
-  
 
-
-
-  
-function getFreezeAccountDetailsToAdd() {
+  function getFreezeAccountDetailsToAdd(searchQuery,filterName) {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
-        setLoading(true); 
-  
+        setLoading(true);
+        let companyCode = ""
+        let vendorCode = ""
+        let companyName = ""
+      
+        if(filterName==="Name"){
+          companyName = searchQuery
+        }else if(filterName==="Dealer Code"){
+          companyCode = searchQuery
+        }else if(filterName==="Vendor Code"){
+          vendorCode = searchQuery
+        }else if(filterName==="Status"){
+          companyName = searchQuery
+        }
+        else{
+          companyName = searchQuery
+        }
+
+
+        // object.put("companyName","Sanity PDC Testing");
+        // object.put("companyCode","");
+        // object.put("vendorCode","");
+
+
+        
         const requestObject = {
           // pageNumber: 0,
           // pageSize: 100,
           // sortBy:'name',
           // sortOrder:'ASC',
-          accountCode: '',
-          vendorCode:'',
-          //accountName:'',
-          accountName:"Sanity PDC Testing"
+          companyCode: companyCode,
+          vendorCode: vendorCode,
+          companyName:companyName,
+         // companyName: "Sanity PDC Testing",
         };
-  
+
         initializeEncryption(
           requestObject,
           getFromLocalStorage(MESSAGE_KEY),
@@ -272,17 +344,22 @@ function getFreezeAccountDetailsToAdd() {
             sessionId: getFromLocalStorage(SESSION_ID),
             contentData: encryptedContentData,
           };
-  
+
           getAccountDetailsToAdd(requestData)
             .then((response) => {
-             // setAccountDetailsToAdd(response.data.result.totalFrozen)
-              const contentData = response.data.result.accountList.map((row) => ({
-                ...row,
-                id: generateRandomId(),
-              }));
-              setAccountDetailsToAdd(contentData);
+              // setAccountDetailsToAdd(response.data.result.totalFrozen)
+              const responseData = response.data.result.accountList.map(
+                (row) => ({
+                  ...row,
+                  id: generateRandomId(),
+                })
+              );
+              setAccountDetailsToAdd(responseData);
               setTotalNoOfRows(response.data.result.accountList.length);
               setLoading(false);
+              // if(responseData.length==0){
+              //   alert("No Record Found,Please try again with different search!")
+              // }
             })
             .catch((error) => {
               if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
@@ -290,7 +367,7 @@ function getFreezeAccountDetailsToAdd() {
                   navigate(CONSTANT.LOGIN);
                 } catch (error) {
                   DebugLog("error " + error);
-                } 
+                }
               } else if (
                 error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
               ) {
@@ -304,7 +381,7 @@ function getFreezeAccountDetailsToAdd() {
                   error.response != null
                     ? error.displayErrorMessage
                     : "Unknown";
-  
+
                 if (message)
                   showErrorAlert(
                     error.message,
@@ -324,10 +401,199 @@ function getFreezeAccountDetailsToAdd() {
       );
     }
   }
-  
-  
-  
- 
+
+
+  function requestUpdateFreezeAccountDetailsData(params,updatedValue) {
+    try {
+      if (isNetworkConnectionAvailable) {
+        setProgressbarText(PROCESSING_PLEASE_WAIT);
+        setLoading(true);
+        // "accountCode": "string",
+        // "accountName": "string",
+        // "actionStatus": "string",
+        // "bankAccountNumber": "string",
+        // "bankName": "string",
+        // "freezeReason": "string",
+        // "pic": "string",
+        // "status": "string",
+        // "unFreezeReason": "string"
+        const requestObject = {
+          //{"accountCode":"A7124","actionStatus":"1","unFreezeReason":"incentive paid"}
+
+          accountName: updatedValue.company,
+          accountCode: updatedValue.code,
+          vendorCode:updatedValue.vendorCode,
+          //unFreezeReason: updatedValue.frozenReason,
+          freezeReason: updatedValue.frozenReason,
+          pic:updatedValue.pic,
+          bankAccountNumber:updatedValue.accountNo,
+          bankName:updatedValue.bank,
+           //status:params.status
+        //  unFreezeReason:updatedValue.frozenReason
+        };
+
+        // "accountCode": "string",
+        // "accountName": "string",
+        // "bankAccountNumber": "string",
+        // "bankName": "string",
+        // "freezeReason": "string",
+        // "pic": "string",
+        // "status": "string",
+        // "unFreezeReason": "string"
+
+
+        initializeEncryption(
+          requestObject,
+          getFromLocalStorage(MESSAGE_KEY),
+          ApiType.ADD_FREEZED_ACCOUNT
+        ).then((encryptedContentData) => {
+          const requestData = {
+            requestId: generateRequestId(),
+            loginId: getFromLocalStorage(LOGIN_ID),
+            sessionId: getFromLocalStorage(SESSION_ID),
+            contentData: encryptedContentData,
+          };
+
+          addFreezeAccount(requestData)
+            .then((response) => {
+              setLoading(false);
+              showErrorAlert("UPDATED", "Freeze account details updated Successfully.");
+              //getFreezeAccountDetailsData(); // load list again
+            })
+            .catch((error) => {
+              if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+                try {
+                  navigate("/");
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else if (
+                error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+              ) {
+                try {
+                  navigate(CONSTANT.FINANCE_DASHBOARD);
+                } catch (error) {
+                  DebugLog("error " + error);
+                }
+              } else {
+                const message =
+                  error.response != null
+                    ? error.displayErrorMessage
+                    : "Unknown";
+
+                if (message)
+                  showErrorAlert(
+                    error.message,
+                    ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                  );
+              }
+            });
+        });
+      } else {
+        showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+      }
+    } catch (error) {
+      const message = error.response != null ? error.response : error.message;
+      showErrorAlert(
+        error.message,
+        ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+      );
+    }
+  }
+
+  function requestUnFreezeAccountDetailsData(params,updatedValue) {
+    setOpenSaveAndRemoveDialog(false)
+    // try {
+    //   if (isNetworkConnectionAvailable) {
+    //     setProgressbarText(LOADING_PLEASE_WAIT);
+    //     setLoading(true);
+
+    //     const requestObject = {
+    //       accountCode: updatedValue.code,
+    //       actionStatus: "1",
+    //       unFreezeReason: updatedValue.frozenReason,
+         
+    //     };
+
+    //     initializeEncryption(
+    //       requestObject,
+    //       getFromLocalStorage(MESSAGE_KEY),
+    //       ApiType.GET_EARMARKS_DETAILS
+    //     ).then((encryptedContentData) => {
+    //       const requestData = {
+    //         requestId: generateRequestId(),
+    //         loginId: getFromLocalStorage(LOGIN_ID),
+    //         sessionId: getFromLocalStorage(SESSION_ID),
+    //         contentData: encryptedContentData,
+    //       };
+
+    //       unFreezeAccountDetails(requestData)
+    //         .then((response) => {
+             
+    //           setLoading(false);
+    //           showErrorAlert("UNFREEZED", "Account un-freezed successfully.");
+    //         })
+    //         .catch((error) => {
+    //           if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+    //             try {
+    //               navigate("/");
+    //             } catch (error) {
+    //               DebugLog("error " + error);
+    //             }
+    //           } else if (
+    //             error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+    //           ) {
+    //             try {
+    //               navigate(CONSTANT.FINANCE_DASHBOARD);
+    //             } catch (error) {
+    //               DebugLog("error " + error);
+    //             }
+    //           } else {
+    //             const message =
+    //               error.response != null
+    //                 ? error.displayErrorMessage
+    //                 : "Unknown";
+
+    //             if (message)
+    //               showErrorAlert(
+    //                 error.message,
+    //                 ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+    //               );
+    //           }
+    //         });
+    //     });
+    //   } else {
+    //     showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+    //   }
+    // } catch (error) {
+    //   const message = error.response != null ? error.response : error.message;
+    //   showErrorAlert(
+    //     error.message,
+    //     ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+    //   );
+    // }
+  }
+
+  const renderButton = (rowData) => {
+    return <CustomButtonSmall
+    btnBG={colors.primary[100]}
+    btnColor={colors.grey[900]}
+    btnTxt={"Freeze"}
+    btnBorder={"1px solid"+colors.primary[100]}
+    onClick={() => handleAddFreezeAccountClick(rowData)}
+    ></CustomButtonSmall>
+  };
+
+  const handleAddFreezeAccountClick = (rowData) => {
+
+    DebugLog("row data"+JSON.stringify(rowData))
+    setSelectedDealerName(rowData.name);
+    setSelectedDealerCode(rowData.code);
+    setSelectedItem(rowData)
+    setOpenSaveAndRemoveDialog(true);
+   // setOpenAddEarmarkDialog(true);
+    // addNewEarmark();
+  };
 
   function blockNavigation(location, action) {
     // Block navigation if action is "pop", which indicates back/forward button press
@@ -341,7 +607,6 @@ function getFreezeAccountDetailsToAdd() {
 
   function showErrorAlert(title, content) {
     try {
-    
       setError();
       setLoading(false);
 
@@ -364,19 +629,34 @@ function getFreezeAccountDetailsToAdd() {
     }
   };
 
-  
   return (
     /* Main Container */
     <Box>
       <SnackbarProvider maxSnack={3}>
         <ConnectionStatus />
-        <AddEarmarkDialogInput open={open} onClose={handleClose} />
-       
+        {/* <AddEarmarkDialogInput open={open} onClose={handleClose} /> */}
+
+
+        <AddEarmarkDialogInput
+                  open={openAddEarmarkDialog}
+                  onClose={handleClose}
+                  dealerName={selectedDealerName}
+                  onSubmit={addNewEarmark}
+              />
+
         <ShowErrorAlertDialog
           status={getDialogStatus}
           title={title}
           content={content}
         />
+          <AddDealerFreezeAccountDialog
+            open={openSaveAndRemoveDialog}
+            onClose={handleCloseSaveAndUnfreezeEarmarkDialog}
+            onDialogButtonClick={requestUpdateFreezeAccountDetailsData}
+            onDialogRemoveButtonClick={requestUnFreezeAccountDetailsData}
+            data={selectedItem}
+          />
+
         {isNetworkConnectionAvailable ? (
           <CustomProgressDialog open={loading} text={getProgressbarText} />
         ) : (
@@ -392,9 +672,8 @@ function getFreezeAccountDetailsToAdd() {
             borderRadius: "18px",
           }}
         >
-
- {/* Header */}
- <Grid
+          {/* Header */}
+          <Grid
             container
             direction={"row"}
             alignItems={"center"}
@@ -403,7 +682,7 @@ function getFreezeAccountDetailsToAdd() {
             mt={1}
           >
             <Grid item mr={2}>
-              <IconButton href={CONSTANT.EARMARK_ROUTE} width={12}>
+              <IconButton href={CONSTANT.FREEZE_ACCOUNT_ROUTE} width={12}>
                 <img src={"../../assets/common/Back.svg"} width={12} />
               </IconButton>
             </Grid>
@@ -418,51 +697,46 @@ function getFreezeAccountDetailsToAdd() {
               </Typography>
             </Grid>
 
-
             <Box position="absolute" right={30} top={100}>
+              <Grid container direction={"row"} alignItems={"center"}>
+                {/* SEARCH BAR */}
+                <Box
+                  backgroundColor={colors.grey[900]}
+                  borderRadius="20px"
+                  ml={5}
+                  mr={2}
+                >
+                  <InputBase
+                    sx={{ ml: 2, flex: 1 }}
+                    placeholder="Search Dealer"
+                    value={searchDealerQuery}
+                    onChange={(e) => setDealerSearchQuery(e.target.value)}
+                  />
 
-            <Grid
-              container
-              direction={"row"}
-              alignItems={"center"}
-            >
-              {/* SEARCH BAR */}
-              <Box
-                backgroundColor={colors.grey[900]}
-                borderRadius="20px"
-                ml={5}
-                mr={2}
-                
-              >
-                <InputBase
-                  sx={{ ml: 2, flex: 1 }}
-                  placeholder="Search Dealer"
-                  value={searchDealerQuery}
-                  onChange={(e) => setDealerSearchQuery(e.target.value)}
+                  <IconButton type="button" sx={{ p: 1 }}>
+                    <SearchIcon onClick={addDealerSearchButtonClicked} />
+                  </IconButton>
+                </Box>
+
+                <ToolbarFilterButton
+                  options={[
+                    "Name",
+                    "Dealer Code",
+                    "Vendor Code",
+                    "Status",
+                    "Company",
+                  ]}
+                  defaultOption="Option 1"
+                  onChange={handleFilterChange}
                 />
 
-                <IconButton type="button" sx={{ p: 1 }}>
-                  <SearchIcon onClick={addDealerSearchButtonClicked} />
-                </IconButton>
-              </Box>
-
-              <ToolbarFilterButton
-                options={["Name", "Dealer Code", "Vendor Code","Status","Company"]}
-                defaultOption="Option 1"
-                onChange={handleFilterChange}
-              />
-
-              <button onClick={handleOpenDialog}>Open Date Picker</button>
-            </Grid>
-
+                {/* <button onClick={handleOpenDialog}>Open Date Picker</button> */}
+              </Grid>
             </Box>
           </Grid>
 
-        
           <DatePickerDialog open={isDialogOpen} onClose={handleCloseDialog} />
           {/* Header */}
-
-
 
           {/* Greetings Header */}
           {/* <Grid container>
@@ -483,14 +757,6 @@ function getFreezeAccountDetailsToAdd() {
             highlight3Stat={"RM 31.47"}
           ></HighlightStats> */}
           {/* Highlight Stats */}
-
-
-
-
-
-
-
-
 
           {/* On Hold Section */}
           <Grid
@@ -558,7 +824,9 @@ function getFreezeAccountDetailsToAdd() {
                     currentPage * pageSize,
                     (currentPage + 1) * pageSize
                   )}
-                  columns={FreezeAccountAddDealerColumnHeader}
+                  columns={FreezeAccountAddDealerColumnHeader(
+                    renderButton
+                )}
                   components={{ Toolbar: GridToolbar }}
                   //checkboxSelection
                   //selecion
@@ -566,10 +834,12 @@ function getFreezeAccountDetailsToAdd() {
                   rowCount={filteredRows.length}
                   pagination
                   onPageChange={handlePageChange}
+                 // onRowClick={handleRowClick}
                 />
               </Box>
             ) : (
               NoDataFound()
+             
             )}
           </Grid>
 
@@ -625,12 +895,9 @@ function getFreezeAccountDetailsToAdd() {
           )} */}
           {/* Action Buttons */}
 
-
-         {/* activity list */}
+          {/* activity list */}
           {/* <UserActivityInfo/> */}
-             {/* activity list */}
-                
-           
+          {/* activity list */}
         </Grid>
       </SnackbarProvider>
     </Box>
@@ -638,77 +905,78 @@ function getFreezeAccountDetailsToAdd() {
   );
 }
 
+export const FreezeAccountAddDealerColumnHeader = (renderButton) => [
+  {
+    field: "id",
+    headerName: "ID",
+    flex: 0.5,
+    hide: true,
+    headerAlign: "left",
+  },
+  {
+    field: "accountName",
+    headerName: "NAME",
+    flex: 1.5,
+    cellClassName: "bold-column--cell",
+    headerAlign: "left",
+  },
 
+  {
+    field: "accountCode",
+    headerName: "CODE",
+    flex: 1,
+    headerAlign: "left",
+  },
 
+  {
+    field: "vendorCode",
+    headerName: "VENDOR",
+    flex: 1,
+    headerAlign: "left",
+  },
+  {
+    field: "bankName",
+    headerName: "BANK NAME",
+    flex: 1,
+    headerAlign: "left",
+  },
+  {
+    field: "bankAccountNumber",
+    headerName: "BANK A/C NUMBER",
+    flex: 1,
+    headerAlign: "left",
+    cellClassName: "bold-column--cell",
+  },
+  {
+    field: 'freezeReason',
+    headerName: 'ACTIONS',
+    flex: 1,
+    headerAlign: 'left',
+    renderCell: (params) => (
+     !params.value 
+     ? 
+      renderButton(params.row)
+      : <CurrencyCellRenderer value={params.row.freezeReason} />
+    ),
+    },
+  // {
+  //   field: "action",
+  //   headerName: "Actions",
+  //   width: 150,
+  //   headerAlign: "left",
+  //   renderCell: (params) => (
+  //     <CustomButton
+  //       btnBG={colors.pink[700]}
+  //       btnColor={colors.grey[100]}
+  //       btnTxt={"FREEZE"}
+  //       onClick={() => freezeAccountButtonClick(params.row.id)}
+  //     ></CustomButton>
+  //   ),
+  // },
+];
 
-export const FreezeAccountAddDealerColumnHeader = [
-    {
-      field: "id",
-      headerName: "ID",
-      flex: 0.5,
-      hide: true,
-      headerAlign: "left",
-    },
-    {
-      field: "accountName",
-      headerName: "NAME",
-      flex: 1.5,
-      cellClassName: "bold-column--cell",
-      headerAlign: "left",
-    },
-  
-    {
-      field: "accountCode",
-      headerName: "CODE",
-      flex: 1,
-      headerAlign: "left",
-    },
-   
-    {
-      field: "vendorCode",
-      headerName: "VENDOR",
-      flex: 1,
-      headerAlign: "left",
-    },
-    {
-      field: "bankName",
-      headerName: "BANK NAME",
-      flex: 1,
-      headerAlign: "left",
-    },
-    {
-      field: "bankAccountNumber",
-      headerName: "BANK A/C NUMBER",
-      flex: 1,
-      headerAlign: "left",
-      cellClassName: "bold-column--cell",
-      
-    },
-    {
-      field: 'action',
-      headerName: 'Actions',
-      width: 150,
-      headerAlign: "left",
-      renderCell: (params) => (
-          <CustomButton
-                    btnBG={colors.pink[700]}
-                    btnColor={colors.grey[100]}
-                   
-                    btnTxt={"FREEZE"}
-                    onClick= {() => freezeAccountButtonClick(params.row.id)}
-                
-                  ></CustomButton>
-  
-      ),
-    },
-  ];
-  
 export const freezeAccountButtonClick = (id) => {
-
-    alert("button click")
-    // Handle button click action here
-    console.log('Button clicked for row with ID:', id);
-
-
-    
-  };
+  alert("button click");
+  // Handle button click action here
+  console.log("Button clicked for row with ID:", id);
+};

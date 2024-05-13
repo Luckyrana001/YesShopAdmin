@@ -30,7 +30,7 @@ export const ADD_ADJUSTMENTS_ROUTE = "/addAdjustments";
 
 
 export const ADJUSTMENT_ROUTE = "/adjustment";
-export const EARMARK_ROUTE = "/earkmark";
+export const EARMARK_ROUTE = "/earmark";
 
 // Routes end
 

@@ -58,6 +58,7 @@ import {
 } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
 import { ApiErrorCode, ApiType } from "../../services/ApiTags";
+import CancelHoldDialog from "./CancelHoldDialog";
 
 export function OnHoldSummary() {
   const theme = useTheme();
@@ -75,6 +76,8 @@ export function OnHoldSummary() {
   const [content, setContent] = useState("");
   const [, setError] = useState("");
   const [getProgressbarText, setProgressbarText] = useState("");
+
+  const [openDialog, setOpenDialog] = useState(false);
 
   const [onHoldSummary, setOnHoldSummary] = useState([]);
   const [onHoldData, setOnHoldData] = useState([]);
@@ -128,6 +131,11 @@ export function OnHoldSummary() {
   );
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    DebugLog("Dialog Closed");
   };
 
   function getUserRole() {
@@ -292,6 +300,7 @@ export function OnHoldSummary() {
     console.log("Selected rows data:", selectedData);
 
     if (selectedData.length > 0) {
+      setOpenDialog(true);
       //   //const navData = getFromLocalStorageJsonObject(NAV_PAYOUT_DETAIL_DATA)
       //   DebugLog("nav Daat======="+JSON.stringify(navData))
 
@@ -309,7 +318,7 @@ export function OnHoldSummary() {
       //   DebugLog("onHoldSelectedRowData  Daat======="+JSON.stringify(onHoldSelectedRowData))
       //   //requestPayoutOnHold(onHoldSelectedRowData)
 
-      showErrorAlert("", "COMING SOON!");
+      // showErrorAlert("", "COMING SOON!");
 
       resetSelection();
     } else {
@@ -577,6 +586,8 @@ export function OnHoldSummary() {
           )}
           {/* Action Buttons */}
         </Grid>
+
+        <CancelHoldDialog open={openDialog} onClose={handleCloseDialog} />
       </SnackbarProvider>
     </Box>
     /* Main Container */

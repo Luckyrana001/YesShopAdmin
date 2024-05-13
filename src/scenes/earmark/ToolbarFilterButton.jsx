@@ -32,7 +32,7 @@ const ToolbarFilterButton = ({ options, defaultOption, onChange }) => {
                   btnBG={colors.grey[900]}
                   btnColor={colors.grey[100]}
                   btnStartIcon={
-                    <img src="../../assets/common/Download.svg" width={22} />
+                    <img src="../../assets/common/Filter.svg" width={22} />
                   }
                   btnEndIcon={
                     <img src="../../assets/common/Arrow-down.svg" height={8} />

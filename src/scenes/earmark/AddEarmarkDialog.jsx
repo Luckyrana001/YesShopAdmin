@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box, Grid, Typography } from '@mui/material';
 
-function AddEarmarkDialogInput({ open, onClose }) {
+function AddEarmarkDialogInput({ open, onClose, dealerName, onSubmit }) {
   const [formData, setFormData] = useState({
     dealer: '',
     earmark: '',
@@ -10,6 +10,11 @@ function AddEarmarkDialogInput({ open, onClose }) {
    
   });
   const [errors, setErrors] = useState({});
+
+  // auto update dealer name in the form
+  useEffect(() => {
+    setFormData((prevFormData) => ({ ...prevFormData, dealer: dealerName }));
+  }, [dealerName]);
 
   const handleInputChange = (e) => {
     const {  name, value } = e.target;
@@ -33,10 +38,12 @@ function AddEarmarkDialogInput({ open, onClose }) {
 
     if (!formData.reason.trim()) {
         newErrors.reason = 'Reason is required';
-       }
+      }
+
     if (Object.keys(newErrors).length === 0) {
       // Form is valid, submit the data
       console.log('Form data:', formData);
+      onSubmit(formData);
 
        // Close the dialog
       onClose();
@@ -67,6 +74,9 @@ function AddEarmarkDialogInput({ open, onClose }) {
             onChange={handleInputChange}
             error={Boolean(errors.dealer)}
             helperText={errors.dealer}
+            InputProps={{
+              readOnly: Boolean(dealerName),
+            }}
           />
           <TextField
             margin="dense"

@@ -254,9 +254,9 @@ export function CreditDebitScreen() {
   }
   const handleRowClick = (params) => {
     setSelectedItem(params.row);
-   
+    navigate(CONSTANT.ADD_ADJUSTMENTS_ROUTE)
     //setOpenSaveAndRemoveDialog(true);
-    alert("Credit debit click.");
+    //alert("Credit debit click.");
   }
   function blockNavigation(location, action) {
     // Block navigation if action is "pop", which indicates back/forward button press
@@ -304,11 +304,11 @@ export function CreditDebitScreen() {
         {/* <div>
       <h1>Parent Component</h1> */}
         
-      <CustomDatePickerDialog
+      {/* <CustomDatePickerDialog
         open={open}
         onClose={handleClose}
         onSelect={handleDateSelect}
-      />
+      /> */}
      
       {/* {selectedDate && (
         <p>Selected Date: {selectedDate ? selectedDate: 'None'}</p>
@@ -341,7 +341,7 @@ export function CreditDebitScreen() {
             </Grid>
           </Grid>
           {/* Greetings Header */}
-          <button onClick={handleOpen}>Open Date Picker</button>
+          {/* <button onClick={handleOpen}>Open Date Picker</button> */}
           {/* Highlight Stats */}
           <EarmarkHighlightStats
            highlight0={"Total Credit"}

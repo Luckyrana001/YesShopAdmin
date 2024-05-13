@@ -39,7 +39,7 @@ import {
   SESSION_ID,
 } from "../../constants/LocalStorageKeyValuePairString";
 import { generateRandomId, generateRequestId } from "../../utils/RequestIdGenerator";
-import { getAccountDetailsToAdd, getFreezeAccountList, unFreezeAccountDetails, updateFreezeAccountDetails } from "../../services/ApiService";
+import { getAccountDetailsToAdd, getFreezeAccountAuditActivityDetails, getFreezeAccountList, getFreezedAccountCount, unFreezeAccountDetails, updateFreezeAccountDetails } from "../../services/ApiService";
 import { useNavigate } from "react-router-dom";
 import { earmarksDetailsColumnHeader, freezedAccountDetailsColumnHeader } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
@@ -58,7 +58,6 @@ export function FreezeAccountScreen() {
   const isNetworkConnectionAvailable = UseOnlineStatus();
   const [selectedItem, setSelectedItem] = useAtom(selectedItems);
   const [openSaveAndRemoveDialog, setOpenSaveAndRemoveDialog] = useState(false);
-  const [earmarkActivityDetails, setearmarkActivityDetails] = useState([]);
 
   const [getDialogStatus, setErrorDialog] = useAtom(showErrorAlertDialog);
   const { enqueueSnackbar } = useSnackbar();
@@ -71,6 +70,9 @@ export function FreezeAccountScreen() {
   const [accountDetailsToAdd, setAccountDetailsToAdd] = useState("");
 
   const [allFreezeAccountDetails, setAllFreezeAccountDetails] = useState([]);
+  const [freezeAccountAuditActivity, setFreezeAccountAuditActivity] = useState([]);
+  const [freezeAccountCount, setFreezeAccountCount] = useState([]);
+
   const [gridHeight, setGridHeight] = useState(108); // Default height
   const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
   const [pageSize, setPageSize] = useState(15);
@@ -93,7 +95,6 @@ export function FreezeAccountScreen() {
     setGridHeight(totalHeight);
   }
 
-  
   useEffect(() => {
     checkUserAuthExistOrNot();
 
@@ -101,7 +102,9 @@ export function FreezeAccountScreen() {
 
     getFreezeAccountDetailsData();
 
-    //getFreezeAccountDetailsToAdd();
+    getFreezeAccountActivityDetails();
+
+    getFreezedAccountCountDetails();
 
     showNoInternetSnackBar();
 
@@ -191,44 +194,130 @@ const handleCloseSaveAndUnfreezeEarmarkDialog = () => {
 };
 
 
-function getFreezeAccountDetailsToAdd() {
+
+
+
+function getFreezedAccountCountDetails() {
   try {
     if (isNetworkConnectionAvailable) {
       setProgressbarText(LOADING_PLEASE_WAIT);
       setLoading(true); 
 
       const requestObject = {
-        // pageNumber: 0,
-        // pageSize: 100,
+         //pageNumber: 0,
+       //  pageSize: 100,
         // sortBy:'name',
         // sortOrder:'ASC',
-        accountCode: '',
-        vendorCode:'',
+        // accountCode: '',
+        // vendorCode:'',
         //accountName:'',
-        accountName:"Sanity PDC Testing"
+        //accountName:"Sanity PDC Testing"
       };
 
       initializeEncryption(
         requestObject,
         getFromLocalStorage(MESSAGE_KEY),
-        ApiType.GET_EARMARKS_DETAILS
+        ApiType.GET_FREEZED_ACCOUNT_COUNT
       ).then((encryptedContentData) => {
-        const onholdCompanyRequestData = {
+        const requestData = {
           requestId: generateRequestId(),
           loginId: getFromLocalStorage(LOGIN_ID),
           sessionId: getFromLocalStorage(SESSION_ID),
           contentData: encryptedContentData,
         };
 
-        getAccountDetailsToAdd(onholdCompanyRequestData)
+        getFreezedAccountCount(requestData)
           .then((response) => {
-            setAccountDetailsToAdd(response.data.result.totalFrozen)
-            // const contentData = response.data.result.freezeAccountDetails.content.map((row) => ({
+            // const contentData = response.data.result..content.map((row) => ({
             //   ...row,
             //   id: generateRandomId(),
             // }));
-            //setAllFreezeAccountDetails(contentData);
-            //setTotalNoOfRows(response.data.result.freezeAccountDetails.content.length);
+
+
+            setTotalFreezedAccount( response.data.result.totalFrozen);
+            // setTotalNoOfRows(response.data.result.freezeAccountDetails.content.length);
+            setLoading(false);
+          })
+          .catch((error) => {
+            if (error.data.errorCode === ApiErrorCode.SESSION_ID_NOT_FOUND) {
+              try {
+                navigate(CONSTANT.LOGIN);
+              } catch (error) {
+                DebugLog("error " + error);
+              }
+            } else if (
+              error.data.errorCode === ApiErrorCode.UNABLE_TO_PROCESS_ERROR
+            ) {
+              try {
+                navigate(CONSTANT.FINANCE_DASHBOARD);
+              } catch (error) {
+                DebugLog("error " + error);
+              }
+            } else {
+              const message =
+                error.response != null
+                  ? error.displayErrorMessage
+                  : "Unknown";
+
+              if (message)
+                showErrorAlert(
+                  error.message,
+                  ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+                );
+            }
+          });
+      });
+    } else {
+      showErrorAlert(ALERT, NO_INTERNET_CONNECTION_FOUND);
+    }
+  } catch (error) {
+    const message = error.response != null ? error.response : error.message;
+    showErrorAlert(
+      error.message,
+      ERROR_WHILE_FETCHING_DATA + JSON.stringify(message)
+    );
+  }
+}
+
+
+
+function getFreezeAccountActivityDetails() {
+  try {
+    if (isNetworkConnectionAvailable) {
+      setProgressbarText(LOADING_PLEASE_WAIT);
+      setLoading(true); 
+
+      const requestObject = {
+         pageNumber: 0,
+         pageSize: 100,
+        // sortBy:'name',
+        // sortOrder:'ASC',
+        // accountCode: '',
+        // vendorCode:'',
+        //accountName:'',
+        //accountName:"Sanity PDC Testing"
+      };
+
+      initializeEncryption(
+        requestObject,
+        getFromLocalStorage(MESSAGE_KEY),
+        ApiType.GET_FREEZE_ACCOUNT_ACTIVITY_DETAILS
+      ).then((encryptedContentData) => {
+        const requestData = {
+          requestId: generateRequestId(),
+          loginId: getFromLocalStorage(LOGIN_ID),
+          sessionId: getFromLocalStorage(SESSION_ID),
+          contentData: encryptedContentData,
+        };
+
+        getFreezeAccountAuditActivityDetails(requestData)
+          .then((response) => {
+            const contentData = response.data.result.freezeAccountAuditDetails.content.map((row) => ({
+              ...row,
+              id: generateRandomId(),
+            }));
+            setFreezeAccountAuditActivity(contentData);
+            // setTotalNoOfRows(response.data.result.freezeAccountDetails.content.length);
             setLoading(false);
           })
           .catch((error) => {
@@ -287,8 +376,8 @@ function getFreezeAccountDetailsToAdd() {
         const requestObject = {
           pageNumber: 0,
           pageSize: 100,
-          sortBy:'name',
-          sortOrder:'ASC',
+          // sortBy:'name',
+          // sortOrder:'ASC',
         };
 
         initializeEncryption(
@@ -296,22 +385,22 @@ function getFreezeAccountDetailsToAdd() {
           getFromLocalStorage(MESSAGE_KEY),
           ApiType.GET_EARMARKS_DETAILS
         ).then((encryptedContentData) => {
-          const onholdCompanyRequestData = {
+          const requestData = {
             requestId: generateRequestId(),
             loginId: getFromLocalStorage(LOGIN_ID),
             sessionId: getFromLocalStorage(SESSION_ID),
             contentData: encryptedContentData,
           };
 
-          getFreezeAccountList(onholdCompanyRequestData)
+          getFreezeAccountList(requestData)
             .then((response) => {
               setTotalFreezedAccount(response.data.result.totalFrozen)
-              const contentData = response.data.result.freezeAccountDetails.content.map((row) => ({
+              const contentData = response.data.result.content.map((row) => ({
                 ...row,
                 id: generateRandomId(),
               }));
               setAllFreezeAccountDetails(contentData);
-              setTotalNoOfRows(response.data.result.freezeAccountDetails.content.length);
+              setTotalNoOfRows(response.data.result.content.length);
               setLoading(false);
             })
             .catch((error) => {
@@ -362,12 +451,12 @@ function getFreezeAccountDetailsToAdd() {
         setLoading(true);
 
         const requestObject = {
-         
+          //{"accountCode":"A7124","actionStatus":"1","unFreezeReason":"incentive paid"}
 
-          //accountName: updatedValue.company,
+          //companyName: updatedValue.company,
           accountCode: updatedValue.code,
-         // vendorCode: updatedValue.vendorCode,
-         unFreezeReason: updatedValue.frozenReason,
+          actionStatus: "",
+          unFreezeReason: updatedValue.frozenReason,
          // freezeReason: updatedValue.frozenReason,
          // pic:updatedValue.pic,
          // bankAccountNumber:updatedValue.accountNo,
@@ -445,20 +534,23 @@ function getFreezeAccountDetailsToAdd() {
     }
   }
 
-  function requestUnFreezeAccountDetailsData(params) {
+  function requestUnFreezeAccountDetailsData(params,updatedValue) {
     try {
       if (isNetworkConnectionAvailable) {
         setProgressbarText(LOADING_PLEASE_WAIT);
         setLoading(true);
 
         const requestObject = {
-          code: params.code,
-          date: params.date,
-          earmark: params.earmark,
+          accountCode: updatedValue.code,
+          actionStatus: "1",
+          unFreezeReason: updatedValue.frozenReason,
+          // code: params.code,
+          // date: params.date,
+          // earmark: params.earmark,
           // fromDate: params.fromDate,
           // toDate: params.toDate,
-          name: params.name,
-          reason: params.reason,
+          // name: params.name,
+          // reason: params.reason,
         };
 
         initializeEncryption(
@@ -749,7 +841,7 @@ function getFreezeAccountDetailsToAdd() {
 
 
          {/* activity list */}
-          <UserActivityInfo data={earmarkActivityDetails} />
+          <UserActivityInfo data={freezeAccountAuditActivity} />
              {/* activity list */}
                 
            

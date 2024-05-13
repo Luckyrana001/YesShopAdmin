@@ -2,10 +2,10 @@ import React from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import PriceFormatter from "../utils/PriceFormatter";
-import { colors } from "@mui/material";
 import CustomButton from "./CustomButton";
+import { Padding } from "@mui/icons-material";
 
-const CurrencyCellRenderer = ({ value }) => {
+export const CurrencyCellRenderer = ({ value }) => {
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
       {/* <AttachMoneyIcon fontSize="small" /> */}
@@ -234,6 +234,74 @@ export const earmarksDetailsColumnHeader = [
 //   "status": "Scheduled",
 //   "amount": "500.00"
 // },
+
+// Add Dealer page - earmark
+export const allAccountsEarmarkColumnHeader = (renderButton) => [
+  {
+    field: "id",
+    headerName: "ID",
+    flex: 0.5,
+    hide: true,
+    headerAlign: "left",
+  },
+  {
+    field: "name",
+    headerName: "NAME",
+    flex: 1.7,
+    cellClassName: "bold-column--cell",
+    headerAlign: "left",
+    renderCell: (params) => (
+      <div style={{ paddingLeft: '8px' }}>
+        {params.value}
+      </div>
+    ),
+  },
+  {
+    field: "date",
+    flex: 0.6,
+    headerName: "DATE",
+    headerAlign: "left",
+  },
+  {
+    field: "code",
+    headerName: "CODE",
+    flex: 0.6,
+    headerAlign: "left",
+  },
+ 
+  {
+    field: "vendor",
+    headerName: "VENDOR",
+    flex: 0.6,
+    headerAlign: "left",
+  },
+  {
+    field: "reason",
+    headerName: "REASON",
+    flex: 1,
+    headerAlign: "left",
+  },
+  // {
+  //   field: "earmark",
+  //   headerName: "EARMARK",
+  //   flex: 1,
+  //   headerAlign: "left",
+  //   cellClassName: "bold-column--cell",
+  //   renderCell: (params) => <CurrencyCellRenderer value={params.value} />,
+    
+  // },
+  {
+  field: 'addButton',
+  headerName: 'EARMARK',
+  flex: 1,
+  headerAlign: 'left',
+  renderCell: (params) => (
+    params.value 
+    ? renderButton(params.row)
+    : <CurrencyCellRenderer value={params.row.earmark} />
+  ),
+  },
+];
 
 
 export const debitCreditAccountDetailsColumnHeader = [

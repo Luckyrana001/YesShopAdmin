@@ -3,33 +3,19 @@ import {
   Dialog,
   useTheme,
   Stack,
-  DialogTitle,
   DialogContent,
-  DialogActions,
   TextField,
-  Button,
-  Box,
   Grid,
   Typography,
-  colors,
 } from "@mui/material";
 import CustomButton from "../../components/CustomButton";
 import { tokens } from "../../theme";
-import Timeline from "@mui/lab/Timeline";
-import TimelineItem, { timelineItemClasses } from "@mui/lab/TimelineItem";
-import TimelineSeparator from "@mui/lab/TimelineSeparator";
-import TimelineConnector from "@mui/lab/TimelineConnector";
-import TimelineContent from "@mui/lab/TimelineContent";
-import TimelineDot from "@mui/lab/TimelineDot";
-import TimelineOppositeContent, {
-  timelineOppositeContentClasses,
-} from "@mui/lab/TimelineOppositeContent";
 import { useEffect } from "react";
 import { selectedItems } from "../../config/AppConfig";
 import { useAtom } from "jotai";
 import DebugLog from "../../utils/DebugLog";
 
-function FrozenAccountUpdateDialog({
+function AddDealerFreezeAccountDialog({
   open,
   onClose,
   onDialogButtonClick,
@@ -44,13 +30,13 @@ function FrozenAccountUpdateDialog({
     if (data) {
      
       const value = {
-        company: data.companyName,
-        code: data.companyCode,
-        vendorCode: data.vendorCode,
-        frozenReason: data.freezeReason,
-        //pic:data.pic,
-        accountNo:data.bankAccountNumber,
-        bank:data.bankName,
+        company: data.accountName?data.accountName:"",
+        code: data.accountCode?data.accountCode:"",
+        vendorCode: data.vendorCode?data.vendorCode:"",
+        frozenReason: data.freezeReason?data.freezeReason:"",
+        pic:data.pic?data.pic:"",
+        accountNo:data.bankAccountNumber?data.bankAccountNumber:"",
+        bank:data.bankName?data.bankName:"",
       };
       setFormData(value);
     }
@@ -64,7 +50,7 @@ function FrozenAccountUpdateDialog({
     code: "",
     vendorCode: "",
     frozenReason: "",
-   // pic:"Kelly",
+    pic:"",
     accountNo:"",
     bank:"",
 
@@ -82,50 +68,50 @@ function FrozenAccountUpdateDialog({
   const handleRemove = (e) => {
     e.preventDefault();
     // Validation logic
-    const newErrors = {};
+    // const newErrors = {};
 
-    if (!formData.company.trim()) {
-      newErrors.company = "Company Name is required";
-    }
+    // if (!formData.company.trim()) {
+    //   newErrors.company = "Company Name is required";
+    // }
 
-    if (!formData.code) {
-      newErrors.code = "Code is required";
-    }
+    // if (!formData.code) {
+    //   newErrors.code = "Code is required";
+    // }
 
-    if (!formData.vendorCode) {
-      newErrors.vendorCode = "Vndor Code is required";
-    }
+    // if (!formData.vendorCode) {
+    //   newErrors.vendorCode = "Vndor Code is required";
+    // }
 
-    if (!formData.frozenReason) {
-      newErrors.frozenReason = "Reason is required";
-    }
+    // if (!formData.frozenReason) {
+    //   newErrors.frozenReason = "Reason is required";
+    // }
 
     // if (!formData.pic) {
     //   newErrors.pic = "Pic is required";
     // }
 
-    if (!formData.accountNo) {
-      newErrors.accountNo = "Account number is required";
-    }
+    // if (!formData.accountNo) {
+    //   newErrors.accountNo = "Account number is required";
+    // }
 
-    if (!formData.bank) {
-      newErrors.bank = "Bank name is required";
-    }
-    if (Object.keys(newErrors).length === 0) {
-      // Form is valid, submit the data
-      console.log("Form data:", formData);
+    // if (!formData.bank) {
+    //   newErrors.bank = "Bank name is required";
+    // }
+    // if (Object.keys(newErrors).length === 0) {
+    //   // Form is valid, submit the data
+    //   console.log("Form data:", formData);
 
-      // Close the dialog
-      onClose();
+    //   // Close the dialog
+    //   onClose();
 
-     // onDialogButtonClick(selectedItem, formData);
-      onDialogRemoveButtonClick(selectedItem, formData);
-      // You can perform additional actions like sending data to a server here
-    } else {
-      // Form is not valid, update the errors state
-      setErrors(newErrors);
-    }
-   
+    //  // onDialogButtonClick(selectedItem, formData);
+    //   onDialogRemoveButtonClick(selectedItem, formData);
+    //   // You can perform additional actions like sending data to a server here
+    // } else {
+    //   // Form is not valid, update the errors state
+    //   setErrors(newErrors);
+    // }
+    onDialogRemoveButtonClick(selectedItem, formData);
   };
 
   const handleSubmit = (e) => {
@@ -149,9 +135,9 @@ function FrozenAccountUpdateDialog({
       newErrors.frozenReason = "Reason is required";
     }
 
-    // if (!formData.pic) {
-    //   newErrors.pic = "Pic is required";
-    // }
+    if (!formData.pic) {
+      newErrors.pic = "Pic is required";
+    }
 
     if (!formData.accountNo) {
       newErrors.accountNo = "Account number is required";
@@ -307,7 +293,7 @@ function FrozenAccountUpdateDialog({
               </Grid>
 
 
-              {/* <Grid container xs={12} alignItems={"center"} spacing={3}  pb={.5}>
+              <Grid container xs={12} alignItems={"center"} spacing={3}  pb={.5}>
                 <Grid item xs={4}>
                   <Typography
                     color={colors.grey[100]}
@@ -332,7 +318,7 @@ function FrozenAccountUpdateDialog({
                     helperText={errors.pic}
                   />
                 </Grid>
-              </Grid> */}
+              </Grid>
 
 
               <Grid container xs={12} alignItems={"center"} spacing={3}  pb={.5}>
@@ -399,7 +385,7 @@ function FrozenAccountUpdateDialog({
                 <CustomButton
                   btnBG={colors.primary[900]}
                   btnColor={colors.grey[100]}
-                  btnTxt={"UNFREEZE"}
+                  btnTxt={"CANCEL"}
                   btnBorder={"1px solid" + colors.primary[800]}
                   onClick={handleRemove}
                 ></CustomButton>
@@ -407,7 +393,7 @@ function FrozenAccountUpdateDialog({
                 <CustomButton
                   btnBG={colors.primary[100]}
                   btnColor={colors.grey[900]}
-                  btnTxt={"SAVE"}
+                  btnTxt={"FREEZE"}
                   btnBorder={"1px solid" + colors.primary[100]}
                   onClick={handleSubmit}
                 ></CustomButton>
@@ -426,4 +412,4 @@ function FrozenAccountUpdateDialog({
   );
 }
 
-export default FrozenAccountUpdateDialog;
+export default AddDealerFreezeAccountDialog;

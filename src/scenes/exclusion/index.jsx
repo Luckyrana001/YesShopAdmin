@@ -7,6 +7,7 @@ import SectionHeader from "../../components/SectionHeader";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
+import { Pagination } from '@mui/material';
 
 import ConnectionStatus from "../../utils/ConnectionStatus";
 import { SnackbarProvider, useSnackbar } from "notistack";
@@ -80,6 +81,7 @@ import {
 } from "../../components/ColumnHeader";
 import NoDataFound from "../../components/NoDataFound";
 import CustomButton from "../../components/CustomButton";
+import { useDemoData } from "@mui/x-data-grid-generator";
 
 const ExclusionScreen = () => {
   const theme = useTheme();
@@ -95,55 +97,29 @@ const ExclusionScreen = () => {
   const [content, setContent] = useState("");
   const [, setError] = useState("");
   const [getProgressbarText, setProgressbarText] = useState("");
-
-  //const [exclusionList, setExclusionList] = useState([]);
   const [exclusionList, setExclusionList] = useState([]);
-  const [gridHeight, setGridHeight] = useState(108); // Default height
-  const [totalNoOfRows, setTotalNoOfRows] = useState(0); // Default height
-  const [pageSize, setPageSize] = useState(4);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [searchQuery, setSearchQuery] = useAtom(globalSearchText);
 
-  const handlePageJump = (event) => {
-    setCurrentPage(parseInt(event.target.value, 10) - 1);
+
+
+
+  // Pagination parameters start
+  const pageSize = 10;
+  const [page, setPage] = useState(1);
+
+  const handlePaginationChange = (event, value) => {
+    setPage(value);
   };
 
-  const filteredRows = exclusionList.filter((row) =>
-    Object.values(row).some((value) =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, exclusionList.length);
 
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-  };
+  const paginatedRows = exclusionList.slice(startIndex, endIndex);
+  const [paginationModel, setPaginationModel] = React.useState({
+    pageSize: 10,
+    page: 0,
+  });
+ // pagination parameter end
 
-  
- // increase - decrease list layout height on available list itmes count
- function getDataGridHeight() {
-  // Calculate the total height required for the grid
-  const headerHeight = 100; // Height of header row
-  const rowHeight = 60; // Height of each data row
-  let rowCount = 0;
-  if(totalNoOfRows <= pageSize){
-    rowCount = totalNoOfRows; // Total number of data rows
-  }else{
-    rowCount = pageSize; // Total number of data rows
-  }
-  
-  const totalHeight = headerHeight + rowCount * rowHeight;
-
-  // Set the grid height
-  setGridHeight(totalHeight);
-}
-const handlePageSizeChange = (newPageSize) => {
-  // Here, you would fetch new data based on the new page size
-  // For the sake of this example, let's just set the page size
-  // without updating the data
-  console.log('Page size changed to:', newPageSize);
-  setPageSize(newPageSize)
-  getDataGridHeight()
-};
 
   function checkUserAuthExistOrNot() {
     if (getFromLocalStorage(SESSION_ID) === "") {
@@ -155,8 +131,6 @@ const handlePageSizeChange = (newPageSize) => {
   useEffect(() => {
     checkUserAuthExistOrNot();
 
-    getDataGridHeight();
-
     // get Payout details
     //getPayoutDetail();
 
@@ -165,7 +139,7 @@ const handlePageSizeChange = (newPageSize) => {
     showNoInternetSnackBar();
 
     navigate(blockNavigation);
-  }, [isNetworkConnectionAvailable, enqueueSnackbar, totalNoOfRows]);
+  }, [isNetworkConnectionAvailable, enqueueSnackbar]);
 
   function blockNavigation(location, action) {
     // Block navigation if action is "pop", which indicates back/forward button press
@@ -207,7 +181,7 @@ const handlePageSizeChange = (newPageSize) => {
 
           getExclusionReports(exclusionListRequestData)
             .then((response) => {
-              setTotalNoOfRows(response.data.result.exclusionList.length);
+             // setTotalNoOfRows(response.data.result.exclusionList.length);
               setExclusionList(
                 response.data.result.exclusionList.map((row) => ({
                   ...row,
@@ -543,7 +517,8 @@ const handlePageSizeChange = (newPageSize) => {
                 flex={1}
                 m="0px 0 0 0"
                 pb={0}
-                height={gridHeight}
+               // height={gridHeight}
+                height= {400}
                 sx={{
                   "& .MuiDataGrid-root": {
                     border: "none",
@@ -580,7 +555,7 @@ const handlePageSizeChange = (newPageSize) => {
                   },
                 }}
               >
-                <DataGrid
+                {/* <DataGrid
                   rows={filteredRows.slice(
                     currentPage * pageSize,
                     (currentPage + 1) * pageSize
@@ -596,22 +571,42 @@ const handlePageSizeChange = (newPageSize) => {
                   onPageSizeChange={handlePageSizeChange}
                   rowsPerPageOptions={[15, 30, 45, 60]} // Include 10 in the options
                   autoHeight
-                />
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={setPaginationModel}
+                /> */}
+
+                {/* <div style={{ height: 400, width: "100%" }}> */}
+                  <DataGrid
+                 
+                    rows={paginatedRows}
+                    columns={exclusionColumnHeader}
+                    pageSize={pageSize}
+                    components={{ Toolbar: GridToolbar }}
+                    checkboxSelection
+                    selecion
+                    rowsPerPageOptions={[pageSize]}
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={setPaginationModel}
+                    autoHeight
+                  />
+                  <Pagination
+                    count={Math.ceil(exclusionList.length / pageSize)}
+                    page={page}
+                    onChange={handlePaginationChange}
+                    style={{ marginTop: "20px" }}
+                  />
+                {/* </div> */}
               </Box>
             ) : (
               NoDataFound()
             )}
 
-            {/* <SimpleTable
-          statusData={"In Validation"}
-          statusBG={colors.primary[300]}
-          data={exclusionList}
-        ></SimpleTable> */}
+           
           </Grid>
           {/* Validations Section */}
 
-          {exclusionList.length > 0 ? (
-            <Box mt={1}>
+          {/* {exclusionList.length > 0 ? (
+            <Box mt={10}>
               <Typography>
                 <span>Jump to page: </span>
                 <select value={currentPage + 1} onChange={handlePageJump}>
@@ -625,7 +620,7 @@ const handlePageSizeChange = (newPageSize) => {
             </Box>
           ) : (
             ""
-          )}
+          )} */}
         </Grid>
 
         {/* Action Buttons */}

@@ -127,6 +127,29 @@ export const getEarMarkDetails = (reqestParams) => {
   );
 };
 
+// get earmark filter details
+export const getEarMarkFilterDetailsAPI = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_GET_EARMARK_FILTER_DETAILS_API_URL,
+    reqestParams
+  );
+}
+
+// get all accounts earmark details
+export const getAllAccountsEarMarkDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_ALL_ACCOUNTS_EARMARK_DETAILS_API_URL,
+    reqestParams
+  );
+}
+
+// add new earmark
+export const addEarmarkDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_ADD_EARMARK_DETAILS_API_URL,
+    reqestParams
+  );
+}
 
 // update earMarks details
 export const updateEarMarkDetails = (reqestParams) => {
@@ -143,6 +166,18 @@ export const updateFreezeAccountDetails = (reqestParams) => {
     reqestParams
   );
 };
+
+
+
+// add freeze account 
+export const addFreezeAccount = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_ADD_FREEZE_ACCOUNT_DETAILS_API_URL,
+    reqestParams
+  );
+};
+
+
 
 
 // update freeze account details
@@ -221,6 +256,27 @@ export const updateAccountDetails = (reqestParams) => {
 export const getAccountDetailsToAdd = (reqestParams) => {
   return axiosInstance.post(
     process.env.REACT_APP_GET_FREEZE_ACCOUNT_DETAILS_TO_ADD_API_URL,
+    reqestParams
+  );
+};
+
+
+
+// get freeze account details to add new account to freeze
+export const getFreezedAccountCount = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_GET_FREEZED_ACCOUNT_COUNT_API_URL,
+    reqestParams
+  );
+};
+
+
+
+
+// get freeze account activity audit details
+export const getFreezeAccountAuditActivityDetails = (reqestParams) => {
+  return axiosInstance.post(
+    process.env.REACT_APP_FREEZE_ACCOUNT_AUDIT_ACTIVITY_DETAILS_API_URL,
     reqestParams
   );
 };
